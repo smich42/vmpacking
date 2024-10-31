@@ -1,0 +1,9 @@
+resource
+cmake-build-debug
+cmake-build-release
+.vscode/
+.idea/
+include/
+.DS_Store
+**/.venv/
+*.json
