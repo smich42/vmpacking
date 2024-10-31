@@ -1,0 +1,6 @@
+resource
+cmake-build-debug
+.vscode
+.idea
+include
+.DS_Store
