@@ -1,4 +1,4 @@
-#include <InstanceLoader.h>
+#include <vmp_instanceloader.h>
 
 #include <filesystem>
 #include <fstream>
@@ -7,6 +7,9 @@
 #include <vector>
 
 using json = nlohmann::json;
+
+namespace vmp
+{
 
 InstanceLoader::InstanceLoader(std::string directory)
     : directory(std::move(directory))
@@ -69,8 +72,8 @@ std::vector<Instance> InstanceLoader::makeInstances() const
         std::ranges::transform(
             guestData[i], std::back_inserter(guests), [](const auto &pages) {
                 return std::make_shared<Guest>(
-                    std::unordered_set(std::make_move_iterator(pages.begin()),
-                                       std::make_move_iterator(pages.end())));
+                    std::set(std::make_move_iterator(pages.begin()),
+                             std::make_move_iterator(pages.end())));
             });
 
         instances.emplace_back(capacityData[i], std::move(guests));
@@ -78,3 +81,4 @@ std::vector<Instance> InstanceLoader::makeInstances() const
 
     return instances;
 }
+}  // namespace vmp
