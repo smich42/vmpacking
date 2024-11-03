@@ -1,0 +1,6 @@
+file(GLOB EXAMPLE_SOURCES "*.cpp")
+foreach (ex ${EXAMPLE_SOURCES})
+    get_filename_component(name ${ex} NAME_WE)
+    add_executable(${name} ${ex})
+    target_link_libraries(${name} PRIVATE vmp)
+endforeach ()

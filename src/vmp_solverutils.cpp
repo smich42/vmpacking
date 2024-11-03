@@ -4,7 +4,6 @@
 #include <unordered_map>
 #include <vmp_guest.h>
 #include <vmp_host.h>
-#include <vmp_iterators.h>
 
 namespace vmp
 {

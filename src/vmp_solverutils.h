@@ -1,5 +1,5 @@
-#ifndef VMP_METRICS_H
-#define VMP_METRICS_H
+#ifndef VMP_SOLVERUTILS_H
+#define VMP_SOLVERUTILS_H
 
 #include <vmp_guest.h>
 #include <vmp_iterators.h>
@@ -27,4 +27,4 @@ double sizeOverRelativeSize(const std::shared_ptr<Guest> &guest,
                             const std::unordered_map<int, int> &pageFreq);
 }  // namespace vmp
 
-#endif  // VMP_METRICS_H
+#endif  // VMP_SOLVERUTILS_H

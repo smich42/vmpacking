@@ -1,4 +1,3 @@
-#include <iostream>
 #include <vmp_solvers.h>
 
 #include <numeric>
@@ -41,7 +40,6 @@ static void proceedFirstFit(size_t capacity, GuestIt guestsBegin,
         auto hostIter = std::ranges::find_if(hosts, [&](const auto host) {
             return host->accommodatesGuest(*guest);
         });
-
         if (hostIter == hosts.end()) {
             hosts.emplace_back(std::make_shared<Host>(capacity));
             hostIter = std::prev(hosts.end());
@@ -65,7 +63,7 @@ static void proceedBestFusion(size_t capacity, GuestIt guestsBegin,
                               const GuestIt guestsEnd,
                               std::vector<std::shared_ptr<Host>> &hosts)
 {
-    const std::unordered_map<int, int> pageFreq =
+    const std::unordered_map<int, int> frequencies =
         calculatePageFrequencies(guestsBegin, guestsEnd);
 
     for (; guestsBegin != guestsEnd; ++guestsBegin) {
@@ -79,7 +77,8 @@ static void proceedBestFusion(size_t capacity, GuestIt guestsBegin,
                 continue;
             }
 
-            if (const double candidateRelSize = relativeSize(guest, pageFreq);
+            if (const double candidateRelSize =
+                    relativeSize(guest, frequencies);
                 candidateRelSize < bestRelSize) {
                 bestHost = host;
                 bestRelSize = candidateRelSize;
@@ -111,7 +110,7 @@ static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
     std::deque<std::shared_ptr<Guest>> unplacedGuests;
     std::map<std::shared_ptr<Guest>, std::set<std::shared_ptr<Host>>>
         attemptedPlacements;
-    const std::unordered_map<int, int> pageFreq =
+    const std::unordered_map<int, int> frequencies =
         calculatePageFrequencies(guestsBegin, guestsEnd);
 
     for (; guestsBegin != guestsEnd; ++guestsBegin) {
@@ -130,7 +129,7 @@ static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
             if (attemptedPlacements[guest].contains(host)) {
                 continue;
             }
-            if (const auto candidateRelSize = relativeSize(guest, pageFreq);
+            if (const auto candidateRelSize = relativeSize(guest, frequencies);
                 candidateRelSize < bestRelSize) {
                 bestHost = host;
                 bestRelSize = candidateRelSize;
@@ -147,27 +146,26 @@ static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
 
         // Remove worst guest in container
         while (bestHost->isOverfull()) {
-            const bool allSameEfficiency =
-                std::ranges::adjacent_find(
-                    bestHost->guests,
-                    [&pageFreq](const auto &guestA, const auto &guestB) {
-                        constexpr double relEps = 1e-4;
-                        const double valA =
-                            sizeOverRelativeSize(guestA, pageFreq);
-                        const double valB =
-                            sizeOverRelativeSize(guestB, pageFreq);
-                        return std::abs(valA - valB) >
-                               relEps *
-                                   std::max(std::abs(valA), std::abs(valB));
-                    }) == bestHost->guests.end();
-
-            if (allSameEfficiency) {
-                break;
-            }
-
+            // const bool allSameEfficiency =
+            //     std::ranges::adjacent_find(
+            //         bestHost->guests,
+            //         [&frequencies](const auto &guestA, const auto &guestB) {
+            //             constexpr double relEps = 1e-4;
+            //             const double valA =
+            //                 sizeOverRelativeSize(guestA, frequencies);
+            //             const double valB =
+            //                 sizeOverRelativeSize(guestB, frequencies);
+            //             return std::abs(valA - valB) >
+            //                    relEps *
+            //                        std::max(std::abs(valA), std::abs(valB));
+            //         }) == bestHost->guests.end();
+            //
+            // if (allSameEfficiency) {
+            //     break;
+            // }
             const auto worstGuest = *std::ranges::min_element(
                 bestHost->guests, {}, [&](const auto &candidate) {
-                    return sizeOverRelativeSize(candidate, pageFreq);
+                    return sizeOverRelativeSize(candidate, frequencies);
                 });
 
             unplacedGuests.push_back(worstGuest);
