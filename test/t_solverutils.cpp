@@ -13,13 +13,13 @@ class SolverUtilsTest : public testing::Test
         guest2 = std::make_shared<vmp::Guest>(std::move(std::set{ 2, 3, 4 }));
         guest3 =
             std::make_shared<vmp::Guest>(std::move(std::set{ 1, 3, 4, 5 }));
+        guest4 = std::make_shared<vmp::Guest>(std::move(std::set{ 6, 7 }));
+        guest5 = std::make_shared<vmp::Guest>(std::move(std::set{ 6, 7, 8 }));
 
-        testGuests = { guest1, guest2, guest3 };
+        testGuests = { guest1, guest2, guest3, guest4, guest5 };
     }
 
-    std::shared_ptr<vmp::Guest> guest1;
-    std::shared_ptr<vmp::Guest> guest2;
-    std::shared_ptr<vmp::Guest> guest3;
+    std::shared_ptr<vmp::Guest> guest1, guest2, guest3, guest4, guest5;
     std::vector<std::shared_ptr<vmp::Guest>> testGuests;
 };
 
@@ -33,6 +33,9 @@ TEST_F(SolverUtilsTest, CalculatePageFrequenciesBasicTest)
     EXPECT_EQ(frequencies.at(3), 3);
     EXPECT_EQ(frequencies.at(4), 2);
     EXPECT_EQ(frequencies.at(5), 2);
+    EXPECT_EQ(frequencies.at(6), 2);
+    EXPECT_EQ(frequencies.at(7), 2);
+    EXPECT_EQ(frequencies.at(8), 1);
 }
 
 TEST_F(SolverUtilsTest, CalculatePageFrequenciesEmptyTest)
@@ -50,7 +53,7 @@ TEST_F(SolverUtilsTest, RelativeSizeBasicTest)
         calculatePageFrequencies(testGuests.begin(), testGuests.end());
 
     constexpr double expectedRelativeSize =
-        1.0 / 2.0 + 1.0 / 2.0 + 1.0 / 3.0 + 1.0 / 2.0;
+        1. / 2. + 1. / 2. + 1. / 3. + 1. / 2.;
     const double actualRelativeSize = relativeSize(guest1, frequencies);
 
     EXPECT_NEAR(actualRelativeSize, expectedRelativeSize, 0.0001);
@@ -68,29 +71,20 @@ TEST_F(SolverUtilsTest, SizeOverRelativeSizeBasicTest)
     EXPECT_NEAR(actualRatio, expectedRatio, 0.0001);
 }
 
-TEST_F(SolverUtilsTest, SingleGuestTest)
-{
-    const auto singleGuest = std::vector{ guest1 };
-    const auto frequencies =
-        calculatePageFrequencies(singleGuest.begin(), singleGuest.end());
-
-    EXPECT_EQ(frequencies.at(1), 1);
-    EXPECT_EQ(frequencies.at(2), 1);
-    EXPECT_EQ(frequencies.at(3), 1);
-}
-
 TEST_F(SolverUtilsTest, OverlappingGuestsTest)
 {
-    const auto guest4 = std::make_shared<vmp::Guest>(std::set{ 5 });
-    const auto guest5 = std::make_shared<vmp::Guest>(std::set{ 5 });
-    const auto singlePageGuests = std::vector{ guest4, guest5 };
+    const auto singlePageGuests =
+        std::vector{ std::make_shared<vmp::Guest>(std::set{ 5 }),
+                     std::make_shared<vmp::Guest>(std::set{ 5 }) };
 
-    auto frequencies = calculatePageFrequencies(singlePageGuests.begin(),
-                                                singlePageGuests.end());
+    const auto frequencies = calculatePageFrequencies(singlePageGuests.begin(),
+                                                      singlePageGuests.end());
 
-    EXPECT_EQ(frequencies[5], 2);
+    EXPECT_EQ(frequencies.at(5), 2);
 
     constexpr double expectedRelativeSize = 1.0 / 2.0;
-    EXPECT_NEAR(relativeSize(guest4, frequencies), expectedRelativeSize,
-                0.0001);
+    EXPECT_NEAR(relativeSize(singlePageGuests.front(), frequencies),
+                expectedRelativeSize, 0.0001);
 }
+
+TEST_F(SolverUtilsTest, PartitionComponentsBasicTest) {}

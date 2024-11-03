@@ -42,7 +42,7 @@ static void proceedFirstFit(size_t capacity, GuestIt guestsBegin,
         });
         if (hostIter == hosts.end()) {
             hosts.emplace_back(std::make_shared<Host>(capacity));
-            hostIter = std::prev(hosts.end());
+            hostIter = hosts.end() - 1;
         }
 
         (*hostIter)->addGuest(guest);
@@ -91,6 +91,11 @@ static void proceedBestFusion(size_t capacity, GuestIt guestsBegin,
         }
         bestHost->addGuest(*guestsBegin);
     }
+
+    using SetGuestIt = std::set<std::shared_ptr<Guest>>::iterator;
+    decantGuests<SetGuestIt>(hosts, partitionToOne<SetGuestIt>);
+    decantGuests<SetGuestIt>(hosts, partitionToComponents<SetGuestIt>);
+    decantGuests<SetGuestIt>(hosts, partitionToIndividual<SetGuestIt>);
 }
 
 Packing solveBestFusion(const std::shared_ptr<Instance> &instance)
@@ -146,23 +151,6 @@ static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
 
         // Remove worst guest in container
         while (bestHost->isOverfull()) {
-            // const bool allSameEfficiency =
-            //     std::ranges::adjacent_find(
-            //         bestHost->guests,
-            //         [&frequencies](const auto &guestA, const auto &guestB) {
-            //             constexpr double relEps = 1e-4;
-            //             const double valA =
-            //                 sizeOverRelativeSize(guestA, frequencies);
-            //             const double valB =
-            //                 sizeOverRelativeSize(guestB, frequencies);
-            //             return std::abs(valA - valB) >
-            //                    relEps *
-            //                        std::max(std::abs(valA), std::abs(valB));
-            //         }) == bestHost->guests.end();
-            //
-            // if (allSameEfficiency) {
-            //     break;
-            // }
             const auto worstGuest = *std::ranges::min_element(
                 bestHost->guests, {}, [&](const auto &candidate) {
                     return sizeOverRelativeSize(candidate, frequencies);
@@ -187,9 +175,10 @@ static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
     proceedFirstFit(capacity, unplacedGuests.begin(), unplacedGuests.end(),
                     hosts);
 
-    // Remove any redundant containers
-    std::erase_if(hosts,
-                  [](const auto &host) { return host->guestCount() == 0; });
+    using SetGuestIt = std::set<std::shared_ptr<Guest>>::iterator;
+    decantGuests<SetGuestIt>(hosts, partitionToOne<SetGuestIt>);
+    decantGuests<SetGuestIt>(hosts, partitionToComponents<SetGuestIt>);
+    decantGuests<SetGuestIt>(hosts, partitionToIndividual<SetGuestIt>);
 }
 
 Packing solveOverloadAndRemove(const std::shared_ptr<Instance> &instance)

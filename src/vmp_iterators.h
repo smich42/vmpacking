@@ -1,8 +1,6 @@
 #ifndef VMP_ITERATORS_H
 #define VMP_ITERATORS_H
 
-#include <vmp_guest.h>
-
 namespace vmp
 {
 template <typename It, typename T>

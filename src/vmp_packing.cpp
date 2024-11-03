@@ -12,7 +12,9 @@ Packing::Packing(const std::shared_ptr<Instance> &instance,
 
 bool Packing::validate() const
 {
-    return std::ranges::none_of(*hosts, std::mem_fn(&Host::isOverfull));
+    return std::ranges::none_of(*hosts, [](const auto &host) {
+        return host->isOverfull() || host->guests.empty();
+    });
 }
 
 }  // namespace vmp
