@@ -3,6 +3,27 @@
 #include <vmp_packing.h>
 #include <vmp_solvers.h>
 
+void runSolver(
+    const std::string &name,
+    const std::function<vmp::Packing(std::shared_ptr<vmp::Instance>)> &solver,
+    const std::shared_ptr<vmp::Instance> &instance)
+{
+    const auto start = std::chrono::high_resolution_clock::now();
+    const auto packing = solver(instance);
+    const auto end = std::chrono::high_resolution_clock::now();
+
+    const double elapsed =
+        static_cast<double>(
+            std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
+                .count()) /
+        1000.0;
+
+    std::cout << "=== " << name << " ===" << std::endl;
+    std::cout << "Elapsed: " << elapsed << " s\n";
+    std::cout << "Result: " << packing.hosts->size() << ", "
+              << (packing.validate() ? "valid" : "invalid") << std::endl;
+}
+
 int main()
 {
     vmp::InstanceLoader loader("../resource/gauss");
@@ -13,21 +34,10 @@ int main()
 
     std::cout << *instance << std::endl;
 
-    const auto packingNextFit = solveNextFit(instance);
-    std::cout << packingNextFit.hosts->size() << " "
-              << packingNextFit.validate() << std::endl;
-
-    const auto packingFirstFit = solveFirstFit(instance);
-    std::cout << packingFirstFit.hosts->size() << " "
-              << packingFirstFit.validate() << std::endl;
-
-    const auto packingBestFusion = solveBestFusion(instance);
-    std::cout << packingBestFusion.hosts->size() << " "
-              << packingBestFusion.validate() << std::endl;
-
-    const auto packingOverloadAndRemove = solveOverloadAndRemove(instance);
-    std::cout << packingOverloadAndRemove.hosts->size() << " "
-              << packingOverloadAndRemove.validate() << std::endl;
+    runSolver("Next Fit", vmp::solveNextFit, instance);
+    runSolver("First Fit", vmp::solveFirstFit, instance);
+    runSolver("Best Fusion", vmp::solveBestFusion, instance);
+    runSolver("Overload and Remove", vmp::solveOverloadAndRemove, instance);
 
     return 0;
 }
