@@ -13,6 +13,7 @@ target_link_libraries(vmp_test
         PRIVATE
         vmp
         GTest::gtest_main
+        GTest::gmock
 )
 
 include(GoogleTest)

@@ -1,3 +1,4 @@
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <memory>
 #include <vector>
@@ -87,4 +88,17 @@ TEST_F(SolverUtilsTest, OverlappingGuestsTest)
                 expectedRelativeSize, 0.0001);
 }
 
-TEST_F(SolverUtilsTest, PartitionComponentsBasicTest) {}
+TEST_F(SolverUtilsTest, PartitionComponentsBasicTest)
+{
+    const auto components =
+        partitionToComponents(testGuests.begin(), testGuests.end());
+    const auto expectedComponents = std::vector{
+        std::vector{ guest4, guest5 },
+        std::vector{ guest3, guest1, guest2 },
+    };
+
+    EXPECT_THAT(components,
+                testing::UnorderedElementsAre(
+                    testing::UnorderedElementsAre(guest4, guest5),
+                    testing::UnorderedElementsAre(guest3, guest1, guest2)));
+}
