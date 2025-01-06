@@ -6,6 +6,16 @@
 
 namespace vmp
 {
+/**
+ * Packs `[guestsBegin, guestsEnd)` sequentially by Next Fit, modifying a
+ * partial hosts vector
+ *
+ * @tparam GuestIt any iterator type over `std::shared_ptr<Guest>`
+ * @param capacity the fixed bin capacity
+ * @param guestsBegin the start of guest range
+ * @param guestsEnd the end of guest range
+ * @param hosts the partial hosts vector to use
+ */
 template <SharedPtrIterator<Guest> GuestIt>
 static void proceedNextFit(size_t capacity, GuestIt guestsBegin,
                            const GuestIt guestsEnd,
@@ -20,7 +30,13 @@ static void proceedNextFit(size_t capacity, GuestIt guestsBegin,
     }
 }
 
-Packing solveNextFit(const std::shared_ptr<Instance> &instance)
+/**
+ * Solves an instance of VM-PACK by Next Fit
+
+ * @param instance the instance to solve
+ * @return a valid packing
+ */
+Packing solveNextFit(const std::shared_ptr<GeneralInstance> &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
     proceedNextFit(instance->capacity, instance->guests.begin(),
@@ -29,6 +45,16 @@ Packing solveNextFit(const std::shared_ptr<Instance> &instance)
     return Packing(instance, hosts);
 }
 
+/**
+ * Packs `[guestsBegin, guestsEnd)` sequentially by First Fit, modifying a
+ * partial hosts vector
+ *
+ * @tparam GuestIt any iterator type over `std::shared_ptr<Guest>`
+ * @param capacity the fixed bin capacity
+ * @param guestsBegin the start of guest range
+ * @param guestsEnd the end of guest range
+ * @param hosts the partial hosts vector to use
+ */
 template <SharedPtrIterator<Guest> GuestIt>
 static void proceedFirstFit(size_t capacity, GuestIt guestsBegin,
                             const GuestIt guestsEnd,
@@ -49,7 +75,13 @@ static void proceedFirstFit(size_t capacity, GuestIt guestsBegin,
     }
 }
 
-Packing solveFirstFit(const std::shared_ptr<Instance> &instance)
+/**
+ * Solves an instance of VM-PACK by First Fit
+
+ * @param instance the instance to solve
+ * @return a valid packing
+ */
+Packing solveFirstFit(const std::shared_ptr<GeneralInstance> &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
     proceedFirstFit(instance->capacity, instance->guests.begin(),
@@ -58,13 +90,22 @@ Packing solveFirstFit(const std::shared_ptr<Instance> &instance)
     return Packing(instance, hosts);
 }
 
+/**
+ * Packs `[guestsBegin, guestsEnd)` sequentially by "Best Fusion" of Grange, et
+ * al. (2021), modifying a partial hosts vector
+ *
+ * @tparam GuestIt any iterator type over `std::shared_ptr<Guest>`
+ * @param capacity the fixed bin capacity
+ * @param guestsBegin the start of guest range
+ * @param guestsEnd the end of guest range
+ * @param hosts the partial hosts vector to use
+ */
 template <SharedPtrIterator<Guest> GuestIt>
 static void proceedBestFusion(size_t capacity, GuestIt guestsBegin,
                               const GuestIt guestsEnd,
                               std::vector<std::shared_ptr<Host>> &hosts)
 {
-    const std::unordered_map<int, int> frequencies =
-        calculatePageFrequencies(guestsBegin, guestsEnd);
+    const auto frequencies = calculatePageFrequencies(guestsBegin, guestsEnd);
 
     for (; guestsBegin != guestsEnd; ++guestsBegin) {
         const auto &guest = *guestsBegin;
@@ -77,9 +118,9 @@ static void proceedBestFusion(size_t capacity, GuestIt guestsBegin,
                 continue;
             }
 
-            if (const double candidateRelSize =
-                    relativeSize(guest, frequencies);
-                candidateRelSize < bestRelSize) {
+            const double candidateRelSize =
+                calculateRelSize(guest, frequencies);
+            if (candidateRelSize < bestRelSize) {
                 bestHost = host;
                 bestRelSize = candidateRelSize;
             }
@@ -92,13 +133,22 @@ static void proceedBestFusion(size_t capacity, GuestIt guestsBegin,
         bestHost->addGuest(*guestsBegin);
     }
 
+    // Use ordered set for deterministic behaviour
     using SetGuestIt = std::set<std::shared_ptr<Guest>>::iterator;
-    decantGuests<SetGuestIt>(hosts, partitionToOne<SetGuestIt>);
-    decantGuests<SetGuestIt>(hosts, partitionToComponents<SetGuestIt>);
-    decantGuests<SetGuestIt>(hosts, partitionToIndividual<SetGuestIt>);
+    decantGuests<SetGuestIt>(hosts, makeOneGuestPartition<SetGuestIt>);
+    decantGuests<SetGuestIt>(
+        hosts, makeShareGraphComponentGuestPartitions<SetGuestIt>);
+    decantGuests<SetGuestIt>(hosts, makeIndividualGuestPartitions<SetGuestIt>);
 }
 
-Packing solveBestFusion(const std::shared_ptr<Instance> &instance)
+/**
+ * Solves an instance of VM-PACK by "Best Fusion" of Grange, et
+ * al. (2021)
+ *
+ * @param instance the instance to solve
+ * @return a valid packing
+ */
+Packing solveBestFusion(const std::shared_ptr<GeneralInstance> &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
     proceedBestFusion(instance->capacity, instance->guests.begin(),
@@ -107,6 +157,16 @@ Packing solveBestFusion(const std::shared_ptr<Instance> &instance)
     return Packing(instance, hosts);
 }
 
+/**
+ * Packs `[guestsBegin, guestsEnd)` sequentially by "Overload-and-Remove" of
+ * Grange, et al. (2021), modifying a partial hosts vector
+ *
+ * @tparam GuestIt any iterator type over `std::shared_ptr<Guest>`
+ * @param capacity the fixed bin capacity
+ * @param guestsBegin the start of guest range
+ * @param guestsEnd the end of guest range
+ * @param hosts the partial hosts vector to use
+ */
 template <SharedPtrIterator<Guest> GuestIt>
 static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
                                      const GuestIt guestsEnd,
@@ -115,8 +175,7 @@ static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
     std::deque<std::shared_ptr<Guest>> unplacedGuests;
     std::map<std::shared_ptr<Guest>, std::set<std::shared_ptr<Host>>>
         attemptedPlacements;
-    const std::unordered_map<int, int> frequencies =
-        calculatePageFrequencies(guestsBegin, guestsEnd);
+    const auto frequencies = calculatePageFrequencies(guestsBegin, guestsEnd);
 
     for (; guestsBegin != guestsEnd; ++guestsBegin) {
         unplacedGuests.emplace_back(*guestsBegin);
@@ -134,8 +193,8 @@ static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
             if (attemptedPlacements[guest].contains(host)) {
                 continue;
             }
-            if (const auto candidateRelSize = relativeSize(guest, frequencies);
-                candidateRelSize < bestRelSize) {
+            const auto candidateRelSize = calculateRelSize(guest, frequencies);
+            if (candidateRelSize < bestRelSize) {
                 bestHost = host;
                 bestRelSize = candidateRelSize;
             }
@@ -153,7 +212,7 @@ static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
         while (bestHost->isOverfull()) {
             const auto worstGuest = *std::ranges::min_element(
                 bestHost->guests, {}, [&](const auto &candidate) {
-                    return sizeOverRelativeSize(candidate, frequencies);
+                    return calculateSizeRelRatio(candidate, frequencies);
                 });
 
             unplacedGuests.push_back(worstGuest);
@@ -176,12 +235,21 @@ static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
                     hosts);
 
     using SetGuestIt = std::set<std::shared_ptr<Guest>>::iterator;
-    decantGuests<SetGuestIt>(hosts, partitionToOne<SetGuestIt>);
-    decantGuests<SetGuestIt>(hosts, partitionToComponents<SetGuestIt>);
-    decantGuests<SetGuestIt>(hosts, partitionToIndividual<SetGuestIt>);
+    decantGuests<SetGuestIt>(hosts, makeOneGuestPartition<SetGuestIt>);
+    decantGuests<SetGuestIt>(
+        hosts, makeShareGraphComponentGuestPartitions<SetGuestIt>);
+    decantGuests<SetGuestIt>(hosts, makeIndividualGuestPartitions<SetGuestIt>);
 }
 
-Packing solveOverloadAndRemove(const std::shared_ptr<Instance> &instance)
+/**
+ * Solves an instance of VM-PACK by "Overload-and-Remove" of Grange, et
+ * al. (2021)
+ *
+ * @param instance the instance to solve
+ * @return a valid packing
+ */
+Packing
+solveOverloadAndRemove(const std::shared_ptr<GeneralInstance> &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
     proceedOverloadAndRemove(instance->capacity, instance->guests.begin(),

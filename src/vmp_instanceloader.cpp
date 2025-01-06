@@ -62,11 +62,11 @@ void InstanceLoader::loadInstanceData(const int max_instances,
     }
 }
 
-std::vector<Instance> InstanceLoader::makeInstances() const
+std::vector<GeneralInstance> InstanceLoader::makeInstances() const
 {
     assert(capacityData.size() == guestData.size());
 
-    std::vector<Instance> instances;
+    std::vector<GeneralInstance> instances;
     for (int i = 0; i < capacityData.size(); i++) {
         std::vector<std::shared_ptr<Guest>> guests;
         std::ranges::transform(

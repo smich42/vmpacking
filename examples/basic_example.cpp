@@ -5,8 +5,8 @@
 
 void runSolver(
     const std::string &name,
-    const std::function<vmp::Packing(std::shared_ptr<vmp::Instance>)> &solver,
-    const std::shared_ptr<vmp::Instance> &instance)
+    const std::function<vmp::Packing(std::shared_ptr<vmp::GeneralInstance>)> &solver,
+    const std::shared_ptr<vmp::GeneralInstance> &instance)
 {
     const auto start = std::chrono::high_resolution_clock::now();
     const auto packing = solver(instance);
@@ -30,7 +30,7 @@ int main()
     loader.loadInstanceData(1, "capacity", "tiles");
 
     const auto instance =
-        std::make_shared<vmp::Instance>(loader.makeInstances().front());
+        std::make_shared<vmp::GeneralInstance>(loader.makeInstances().front());
 
     std::cout << *instance << std::endl;
 

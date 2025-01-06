@@ -2,7 +2,7 @@
 #define SOLVERS_INSTANCELOADER_H
 
 #include <vector>
-#include <vmp_instance.h>
+#include <vmp_generalinstance.h>
 
 namespace vmp
 {
@@ -15,7 +15,7 @@ class InstanceLoader
     void loadInstanceData(int max_instances = -1,
                           const std::string &capacity_field_name = "capacity",
                           const std::string &guests_field_name = "guests");
-    [[nodiscard]] std::vector<Instance> makeInstances() const;
+    [[nodiscard]] std::vector<GeneralInstance> makeInstances() const;
 
   private:
     const std::string directory;

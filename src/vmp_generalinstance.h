@@ -7,14 +7,14 @@
 namespace vmp
 {
 
-class Instance
+class GeneralInstance
 {
   public:
-    Instance(size_t capacity,
-             const std::vector<std::shared_ptr<Guest>> &guests);
+    GeneralInstance(size_t capacity,
+                    const std::vector<std::shared_ptr<Guest>> &guests);
 
     friend std::ostream &operator<<(std::ostream &os,
-                                    const Instance &instance);
+                                    const GeneralInstance &instance);
 
     const size_t capacity;
     const std::vector<std::shared_ptr<Guest>> guests;

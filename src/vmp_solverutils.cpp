@@ -8,7 +8,7 @@
 namespace vmp
 {
 
-double relativeSize(const std::shared_ptr<Guest> &guest,
+double calculateRelSize(const std::shared_ptr<Guest> &guest,
                     const std::unordered_map<int, int> &pageFreq)
 {
     return std::accumulate(guest->pages.begin(), guest->pages.end(), 0.0,
@@ -18,11 +18,11 @@ double relativeSize(const std::shared_ptr<Guest> &guest,
                            });
 }
 
-double sizeOverRelativeSize(const std::shared_ptr<Guest> &guest,
+double calculateSizeRelRatio(const std::shared_ptr<Guest> &guest,
                             const std::unordered_map<int, int> &pageFreq)
 {
     return static_cast<double>(guest->pageCount()) /
-           relativeSize(guest, pageFreq);
+           calculateRelSize(guest, pageFreq);
 }
 
 }  // namespace vmp

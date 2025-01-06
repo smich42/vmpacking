@@ -6,13 +6,13 @@
 namespace vmp
 {
 
-Packing solveNextFit(const std::shared_ptr<Instance> &instance);
+Packing solveNextFit(const std::shared_ptr<GeneralInstance> &instance);
 
-Packing solveFirstFit(const std::shared_ptr<Instance> &instance);
+Packing solveFirstFit(const std::shared_ptr<GeneralInstance> &instance);
 
-Packing solveBestFusion(const std::shared_ptr<Instance> &instance);
+Packing solveBestFusion(const std::shared_ptr<GeneralInstance> &instance);
 
-Packing solveOverloadAndRemove(const std::shared_ptr<Instance> &instance);
+Packing solveOverloadAndRemove(const std::shared_ptr<GeneralInstance> &instance);
 
 }  // namespace vmp
 

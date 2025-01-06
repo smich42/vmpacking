@@ -1,17 +1,17 @@
-#include <vmp_instance.h>
+#include <vmp_generalinstance.h>
 
 #include <sstream>
 
 namespace vmp
 {
 
-Instance::Instance(const size_t capacity,
-                   const std::vector<std::shared_ptr<Guest>> &guests)
+GeneralInstance::GeneralInstance(
+    const size_t capacity, const std::vector<std::shared_ptr<Guest>> &guests)
     : capacity(capacity), guests(guests)
 {
 }
 
-std::ostream &operator<<(std::ostream &os, const Instance &instance)
+std::ostream &operator<<(std::ostream &os, const GeneralInstance &instance)
 {
     os << "Instance{capacity=" << instance.capacity << ", guests=[";
     for (size_t i = 0; i < instance.guests.size(); ++i) {

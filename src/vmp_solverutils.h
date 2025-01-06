@@ -12,11 +12,11 @@
 namespace vmp
 {
 
-double relativeSize(const std::shared_ptr<Guest> &guest,
-                    const std::unordered_map<int, int> &pageFreq);
+double calculateRelSize(const std::shared_ptr<Guest> &guest,
+                        const std::unordered_map<int, int> &pageFreq);
 
-double sizeOverRelativeSize(const std::shared_ptr<Guest> &guest,
-                            const std::unordered_map<int, int> &pageFreq);
+double calculateSizeRelRatio(const std::shared_ptr<Guest> &guest,
+                             const std::unordered_map<int, int> &pageFreq);
 
 template <SharedPtrIterator<Guest> GuestIt>
 void decantGuests(
@@ -67,7 +67,7 @@ std::unordered_map<int, int> calculatePageFrequencies(GuestIt guestsBegin,
 
 template <SharedPtrIterator<Guest> GuestIt>
 std::vector<std::vector<std::shared_ptr<Guest>>>
-partitionToOne(GuestIt guestsBegin, GuestIt guestsEnd)
+makeOneGuestPartition(GuestIt guestsBegin, GuestIt guestsEnd)
 {
     // Whole-page decanting
     std::vector<std::shared_ptr<Guest>> allGuests;
@@ -79,7 +79,7 @@ partitionToOne(GuestIt guestsBegin, GuestIt guestsEnd)
 
 template <SharedPtrIterator<Guest> GuestIt>
 std::vector<std::vector<std::shared_ptr<Guest>>>
-partitionToIndividual(GuestIt guestsBegin, GuestIt guestsEnd)
+makeIndividualGuestPartitions(GuestIt guestsBegin, GuestIt guestsEnd)
 {
     // Per-guest decanting
     std::vector<std::vector<std::shared_ptr<Guest>>> partition;
@@ -89,7 +89,7 @@ partitionToIndividual(GuestIt guestsBegin, GuestIt guestsEnd)
     return partition;
 }
 
-inline bool sharesAnyPage(const Guest &guest1, const Guest &guest2)
+inline bool guestsHaveSharedPage(const Guest &guest1, const Guest &guest2)
 {
     return std::ranges::any_of(guest1.pages, [&](const auto &page1) {
         return guest2.pages.contains(page1);
@@ -98,7 +98,7 @@ inline bool sharesAnyPage(const Guest &guest1, const Guest &guest2)
 
 template <SharedPtrIterator<Guest> GuestIt>
 std::vector<std::vector<std::shared_ptr<Guest>>>
-partitionToComponents(GuestIt guestsBegin, GuestIt guestsEnd)
+makeShareGraphComponentGuestPartitions(GuestIt guestsBegin, GuestIt guestsEnd)
 {
     std::unordered_set<std::shared_ptr<Guest>> visited;
     std::vector<std::vector<std::shared_ptr<Guest>>> result;
@@ -109,7 +109,8 @@ partitionToComponents(GuestIt guestsBegin, GuestIt guestsEnd)
             component.push_back(*cur);
 
             for (auto it = cur; it != guestsEnd; ++it) {
-                if (!visited.contains(*it) && sharesAnyPage(**cur, **it)) {
+                if (!visited.contains(*it) &&
+                    guestsHaveSharedPage(**cur, **it)) {
                     dfs(it, component);
                 }
             }

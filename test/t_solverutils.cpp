@@ -55,7 +55,7 @@ TEST_F(SolverUtilsTest, RelativeSizeBasicTest)
 
     constexpr double expectedRelativeSize =
         1. / 2. + 1. / 2. + 1. / 3. + 1. / 2.;
-    const double actualRelativeSize = relativeSize(guest1, frequencies);
+    const double actualRelativeSize = calculateRelSize(guest1, frequencies);
 
     EXPECT_NEAR(actualRelativeSize, expectedRelativeSize, 0.0001);
 }
@@ -65,9 +65,9 @@ TEST_F(SolverUtilsTest, SizeOverRelativeSizeBasicTest)
     const auto frequencies =
         calculatePageFrequencies(testGuests.begin(), testGuests.end());
 
-    const double relSize = relativeSize(guest1, frequencies);
+    const double relSize = calculateRelSize(guest1, frequencies);
     const double expectedRatio = 4.0 / relSize;
-    const double actualRatio = sizeOverRelativeSize(guest1, frequencies);
+    const double actualRatio = calculateSizeRelRatio(guest1, frequencies);
 
     EXPECT_NEAR(actualRatio, expectedRatio, 0.0001);
 }
@@ -84,14 +84,14 @@ TEST_F(SolverUtilsTest, OverlappingGuestsTest)
     EXPECT_EQ(frequencies.at(5), 2);
 
     constexpr double expectedRelativeSize = 1.0 / 2.0;
-    EXPECT_NEAR(relativeSize(singlePageGuests.front(), frequencies),
+    EXPECT_NEAR(calculateRelSize(singlePageGuests.front(), frequencies),
                 expectedRelativeSize, 0.0001);
 }
 
 TEST_F(SolverUtilsTest, PartitionComponentsBasicTest)
 {
     const auto components =
-        partitionToComponents(testGuests.begin(), testGuests.end());
+        makeShareGraphComponentGuestPartitions(testGuests.begin(), testGuests.end());
     const auto expectedComponents = std::vector{
         std::vector{ guest4, guest5 },
         std::vector{ guest3, guest1, guest2 },
