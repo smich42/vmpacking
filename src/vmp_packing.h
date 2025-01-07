@@ -10,13 +10,16 @@ namespace vmp
 class Packing
 {
   public:
-    explicit Packing(const std::shared_ptr<GeneralInstance> &instance,
-                     const std::vector<std::shared_ptr<Host>> &hosts);
+    explicit Packing(std::vector<std::shared_ptr<Host>> hosts);
+
+    Packing(Packing &&other) noexcept = default;
+
+    Packing &operator=(Packing &&other) noexcept = default;
+
     [[nodiscard]] bool validate() const;
+    [[nodiscard]] bool countGuests() const;
 
-    const std::shared_ptr<GeneralInstance> instance;
-    const std::unique_ptr<std::vector<std::shared_ptr<Host>>> hosts;
+    std::unique_ptr<std::vector<std::shared_ptr<Host>>> hosts;
 };
-
 }  // namespace vmp
 #endif  // SOLVERS_PACKING_H

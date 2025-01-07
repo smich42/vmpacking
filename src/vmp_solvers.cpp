@@ -32,17 +32,17 @@ static void proceedNextFit(size_t capacity, GuestIt guestsBegin,
 
 /**
  * Solves an instance of VM-PACK by Next Fit
-
+ *
  * @param instance the instance to solve
  * @return a valid packing
  */
-Packing solveNextFit(const std::shared_ptr<GeneralInstance> &instance)
+Packing solveByNextFit(const std::shared_ptr<GeneralInstance> &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
     proceedNextFit(instance->capacity, instance->guests.begin(),
                    instance->guests.end(), hosts);
 
-    return Packing(instance, hosts);
+    return Packing(hosts);
 }
 
 /**
@@ -77,17 +77,17 @@ static void proceedFirstFit(size_t capacity, GuestIt guestsBegin,
 
 /**
  * Solves an instance of VM-PACK by First Fit
-
+ *
  * @param instance the instance to solve
  * @return a valid packing
  */
-Packing solveFirstFit(const std::shared_ptr<GeneralInstance> &instance)
+Packing solveByFirstFit(const std::shared_ptr<GeneralInstance> &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
     proceedFirstFit(instance->capacity, instance->guests.begin(),
                     instance->guests.end(), hosts);
 
-    return Packing(instance, hosts);
+    return Packing(hosts);
 }
 
 /**
@@ -148,13 +148,13 @@ static void proceedBestFusion(size_t capacity, GuestIt guestsBegin,
  * @param instance the instance to solve
  * @return a valid packing
  */
-Packing solveBestFusion(const std::shared_ptr<GeneralInstance> &instance)
+Packing solveByBestFusion(const std::shared_ptr<GeneralInstance> &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
     proceedBestFusion(instance->capacity, instance->guests.begin(),
                       instance->guests.end(), hosts);
 
-    return Packing(instance, hosts);
+    return Packing(hosts);
 }
 
 /**
@@ -249,13 +249,39 @@ static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
  * @return a valid packing
  */
 Packing
-solveOverloadAndRemove(const std::shared_ptr<GeneralInstance> &instance)
+solveByOverloadAndRemove(const std::shared_ptr<GeneralInstance> &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
     proceedOverloadAndRemove(instance->capacity, instance->guests.begin(),
                              instance->guests.end(), hosts);
 
-    return Packing(instance, hosts);
+    return Packing(hosts);
+}
+
+Packing solveByMaximiser(
+    const std::shared_ptr<GeneralInstance> &instance,
+    const std::function<Packing(std::vector<std::shared_ptr<Guest>> guests,
+                                size_t capacity, size_t maxHosts)> &maximiser)
+{
+    size_t maxHostsLb = 0;
+    size_t maxHostsUb = instance->guests.size();
+    Packing bestPacking({});
+
+    while (maxHostsLb <= maxHostsUb) {
+        const size_t maxHostsCandidate = (maxHostsLb + maxHostsUb) / 2;
+        auto packingCandidate =
+            maximiser(instance->guests, instance->capacity, maxHostsCandidate);
+
+        if (packingCandidate.countGuests() == instance->guests.size()) {
+            maxHostsUb = maxHostsCandidate;
+            bestPacking = std::move(packingCandidate);
+        }
+        else {  // Not all guests could be packed
+            maxHostsLb = maxHostsCandidate + 1;
+        }
+    }
+
+    return bestPacking;
 }
 
 }  // namespace vmp

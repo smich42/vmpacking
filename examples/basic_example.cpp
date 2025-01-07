@@ -34,10 +34,10 @@ int main()
 
     std::cout << *instance << std::endl;
 
-    runSolver("Next Fit", vmp::solveNextFit, instance);
-    runSolver("First Fit", vmp::solveFirstFit, instance);
-    runSolver("Best Fusion", vmp::solveBestFusion, instance);
-    runSolver("Overload and Remove", vmp::solveOverloadAndRemove, instance);
+    runSolver("Next Fit", vmp::solveByNextFit, instance);
+    runSolver("First Fit", vmp::solveByFirstFit, instance);
+    runSolver("Best Fusion", vmp::solveByBestFusion, instance);
+    runSolver("Overload and Remove", vmp::solveByOverloadAndRemove, instance);
 
     return 0;
 }

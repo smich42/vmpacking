@@ -18,6 +18,9 @@ double calculateRelSize(const std::shared_ptr<Guest> &guest,
 double calculateSizeRelRatio(const std::shared_ptr<Guest> &guest,
                              const std::unordered_map<int, int> &pageFreq);
 
+double countGuestPagesPlaced(const std::shared_ptr<Guest> &guest,
+                             const std::vector<std::shared_ptr<Host>> &hosts);
+
 template <SharedPtrIterator<Guest> GuestIt>
 void decantGuests(
     std::vector<std::shared_ptr<Host>> &hosts,
@@ -56,13 +59,28 @@ template <SharedPtrIterator<Guest> GuestIt>
 std::unordered_map<int, int> calculatePageFrequencies(GuestIt guestsBegin,
                                                       GuestIt guestsEnd)
 {
-    std::unordered_map<int, int> pageFreq;
+    std::unordered_map<int, int> frequencies;
     for (; guestsBegin != guestsEnd; ++guestsBegin) {
         for (const auto &page : (*guestsBegin)->pages) {
-            ++pageFreq[page];
+            ++frequencies[page];
         }
     }
-    return pageFreq;
+    return frequencies;
+}
+
+template <SharedPtrIterator<Host> HostIt>
+std::unordered_map<int, int> calculatePageFrequencies(HostIt hostsBegin,
+                                                      HostIt hostsEnd)
+{
+    std::unordered_map<int, int> frequencies;
+    for (; hostsBegin != hostsEnd; ++hostsBegin) {
+        for (const auto &guest : (*hostsBegin)->guests) {
+            for (const auto &page : guest->pages) {
+                ++frequencies[page];
+            }
+        }
+    }
+    return frequencies;
 }
 
 template <SharedPtrIterator<Guest> GuestIt>
