@@ -13,7 +13,7 @@ class Guest
   public:
     explicit Guest(const std::set<int> &pages);
     [[nodiscard]] size_t pageCount() const;
-    [[nodiscard]] size_t pagesOn(const Host &host) const;
+    [[nodiscard]] size_t countPagesOn(const Host &host) const;
 
     const std::set<int> pages;
 };

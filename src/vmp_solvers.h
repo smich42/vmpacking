@@ -20,7 +20,7 @@ Packing solveByOverloadAndRemove(const GeneralInstance &instance);
 Packing
 solveByMaximiser(const GeneralInstance &instance,
                  const std::function<Packing(const GeneralInstance &instance,
-                                             size_t maxHosts)> &maximiser);
+                                             size_t allowedHosts)> &maximiser);
 
 Packing solveTree(const TreeInstance &instance);
 

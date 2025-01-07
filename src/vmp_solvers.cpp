@@ -263,20 +263,20 @@ solveByMaximiser(const GeneralInstance &instance,
                  const std::function<Packing(const GeneralInstance &instance,
                                              size_t maxHosts)> &maximiser)
 {
-    size_t maxHostsLb = 0;
-    size_t maxHostsUb = instance.guests.size();
+    size_t maxHosts = 0;
+    size_t minHosts = instance.guests.size();
     Packing bestPacking({});
 
-    while (maxHostsLb <= maxHostsUb) {
-        const size_t maxHostsCandidate = (maxHostsLb + maxHostsUb) / 2;
-        auto packingCandidate = maximiser(instance, maxHostsCandidate);
+    while (minHosts <= maxHosts) {
+        const size_t allowedHosts = (minHosts + maxHosts) / 2;
+        auto packingCandidate = maximiser(instance, allowedHosts);
 
         if (packingCandidate.countGuests() == instance.guests.size()) {
-            maxHostsUb = maxHostsCandidate;
+            maxHosts = allowedHosts;
             bestPacking = std::move(packingCandidate);
         }
         else {  // Not all guests could be packed
-            maxHostsLb = maxHostsCandidate + 1;
+            minHosts = allowedHosts + 1;
         }
     }
 

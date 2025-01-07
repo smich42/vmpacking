@@ -11,19 +11,21 @@ namespace vmp
 class Host
 {
   public:
-    explicit Host(int capacity);
+    explicit Host(size_t capacity);
 
     [[nodiscard]] bool accommodatesGuest(const Guest &guest) const;
     [[nodiscard]] size_t pageFrequency(int page) const;
     [[nodiscard]] size_t pageCount() const;
-    [[nodiscard]] size_t pageCountWith(const Guest &guest) const;
+    [[nodiscard]] size_t countPagesWith(const Guest &guest) const;
     [[nodiscard]] size_t guestCount() const;
     [[nodiscard]] bool isOverfull() const;
+    [[nodiscard]] bool hasGuest(const std::shared_ptr<Guest> &guest) const;
+
     bool addGuest(const std::shared_ptr<Guest> &guest);
     bool removeGuest(const std::shared_ptr<Guest> &guest);
     void clearGuests();
 
-    const int capacity;
+    const size_t capacity;
     std::set<std::shared_ptr<Guest>> guests;
 
   private:

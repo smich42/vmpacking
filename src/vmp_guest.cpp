@@ -13,7 +13,7 @@ size_t Guest::pageCount() const
     return pages.size();
 }
 
-size_t Guest::pagesOn(const Host &host) const
+size_t Guest::countPagesOn(const Host &host) const
 {
     return std::ranges::count_if(
         pages,
