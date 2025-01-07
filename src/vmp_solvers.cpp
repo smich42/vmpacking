@@ -36,11 +36,11 @@ static void proceedNextFit(size_t capacity, GuestIt guestsBegin,
  * @param instance the instance to solve
  * @return a valid packing
  */
-Packing solveByNextFit(const std::shared_ptr<GeneralInstance> &instance)
+Packing solveByNextFit(const GeneralInstance &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
-    proceedNextFit(instance->capacity, instance->guests.begin(),
-                   instance->guests.end(), hosts);
+    proceedNextFit(instance.capacity, instance.guests.begin(),
+                   instance.guests.end(), hosts);
 
     return Packing(hosts);
 }
@@ -81,11 +81,11 @@ static void proceedFirstFit(size_t capacity, GuestIt guestsBegin,
  * @param instance the instance to solve
  * @return a valid packing
  */
-Packing solveByFirstFit(const std::shared_ptr<GeneralInstance> &instance)
+Packing solveByFirstFit(const GeneralInstance &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
-    proceedFirstFit(instance->capacity, instance->guests.begin(),
-                    instance->guests.end(), hosts);
+    proceedFirstFit(instance.capacity, instance.guests.begin(),
+                    instance.guests.end(), hosts);
 
     return Packing(hosts);
 }
@@ -119,7 +119,7 @@ static void proceedBestFusion(size_t capacity, GuestIt guestsBegin,
             }
 
             const double candidateRelSize =
-                calculateRelSize(guest, frequencies);
+                calculateRelSize(*guest, frequencies);
             if (candidateRelSize < bestRelSize) {
                 bestHost = host;
                 bestRelSize = candidateRelSize;
@@ -148,11 +148,11 @@ static void proceedBestFusion(size_t capacity, GuestIt guestsBegin,
  * @param instance the instance to solve
  * @return a valid packing
  */
-Packing solveByBestFusion(const std::shared_ptr<GeneralInstance> &instance)
+Packing solveByBestFusion(const GeneralInstance &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
-    proceedBestFusion(instance->capacity, instance->guests.begin(),
-                      instance->guests.end(), hosts);
+    proceedBestFusion(instance.capacity, instance.guests.begin(),
+                      instance.guests.end(), hosts);
 
     return Packing(hosts);
 }
@@ -193,7 +193,8 @@ static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
             if (attemptedPlacements[guest].contains(host)) {
                 continue;
             }
-            const auto candidateRelSize = calculateRelSize(guest, frequencies);
+            const auto candidateRelSize =
+                calculateRelSize(*guest, frequencies);
             if (candidateRelSize < bestRelSize) {
                 bestHost = host;
                 bestRelSize = candidateRelSize;
@@ -212,7 +213,7 @@ static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
         while (bestHost->isOverfull()) {
             const auto worstGuest = *std::ranges::min_element(
                 bestHost->guests, {}, [&](const auto &candidate) {
-                    return calculateSizeRelRatio(candidate, frequencies);
+                    return calculateSizeRelRatio(*candidate, frequencies);
                 });
 
             unplacedGuests.push_back(worstGuest);
@@ -248,31 +249,29 @@ static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
  * @param instance the instance to solve
  * @return a valid packing
  */
-Packing
-solveByOverloadAndRemove(const std::shared_ptr<GeneralInstance> &instance)
+Packing solveByOverloadAndRemove(const GeneralInstance &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
-    proceedOverloadAndRemove(instance->capacity, instance->guests.begin(),
-                             instance->guests.end(), hosts);
+    proceedOverloadAndRemove(instance.capacity, instance.guests.begin(),
+                             instance.guests.end(), hosts);
 
     return Packing(hosts);
 }
 
-Packing solveByMaximiser(
-    const std::shared_ptr<GeneralInstance> &instance,
-    const std::function<Packing(std::vector<std::shared_ptr<Guest>> guests,
-                                size_t capacity, size_t maxHosts)> &maximiser)
+Packing
+solveByMaximiser(const GeneralInstance &instance,
+                 const std::function<Packing(const GeneralInstance &instance,
+                                             size_t maxHosts)> &maximiser)
 {
     size_t maxHostsLb = 0;
-    size_t maxHostsUb = instance->guests.size();
+    size_t maxHostsUb = instance.guests.size();
     Packing bestPacking({});
 
     while (maxHostsLb <= maxHostsUb) {
         const size_t maxHostsCandidate = (maxHostsLb + maxHostsUb) / 2;
-        auto packingCandidate =
-            maximiser(instance->guests, instance->capacity, maxHostsCandidate);
+        auto packingCandidate = maximiser(instance, maxHostsCandidate);
 
-        if (packingCandidate.countGuests() == instance->guests.size()) {
+        if (packingCandidate.countGuests() == instance.guests.size()) {
             maxHostsUb = maxHostsCandidate;
             bestPacking = std::move(packingCandidate);
         }

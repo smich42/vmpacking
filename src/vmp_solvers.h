@@ -1,25 +1,30 @@
 #ifndef VMP_SOLVERS_H
 #define VMP_SOLVERS_H
 
+#include <vmp_clustertreeinstance.h>
 #include <vmp_generalinstance.h>
 #include <vmp_packing.h>
+#include <vmp_treeinstance.h>
 
 namespace vmp
 {
 
-Packing solveByNextFit(const std::shared_ptr<GeneralInstance> &instance);
+Packing solveByNextFit(const GeneralInstance &instance);
 
-Packing solveByFirstFit(const std::shared_ptr<GeneralInstance> &instance);
+Packing solveByFirstFit(const GeneralInstance &instance);
 
-Packing solveByBestFusion(const std::shared_ptr<GeneralInstance> &instance);
+Packing solveByBestFusion(const GeneralInstance &instance);
+
+Packing solveByOverloadAndRemove(const GeneralInstance &instance);
 
 Packing
-solveByOverloadAndRemove(const std::shared_ptr<GeneralInstance> &instance);
+solveByMaximiser(const GeneralInstance &instance,
+                 const std::function<Packing(const GeneralInstance &instance,
+                                             size_t maxHosts)> &maximiser);
 
-Packing solveByMaximiser(
-    const std::shared_ptr<GeneralInstance> &instance,
-    const std::function<Packing(std::vector<std::shared_ptr<Guest>> guests,
-                                size_t capacity, size_t maxHosts)> &maximiser);
+Packing solveTree(const TreeInstance &instance);
+
+Packing solveClusterTree(const ClusterTreeInstance &instance);
 
 }  // namespace vmp
 

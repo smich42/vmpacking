@@ -1,12 +1,11 @@
 #include <iostream>
-#include <vmp_instanceloader.h>
+#include <vmp_generalinstanceloader.h>
 #include <vmp_packing.h>
 #include <vmp_solvers.h>
 
-void runSolver(
-    const std::string &name,
-    const std::function<vmp::Packing(std::shared_ptr<vmp::GeneralInstance>)> &solver,
-    const std::shared_ptr<vmp::GeneralInstance> &instance)
+void runSolver(const std::string &name,
+               const std::function<vmp::Packing(vmp::GeneralInstance)> &solver,
+               const vmp::GeneralInstance &instance)
 {
     const auto start = std::chrono::high_resolution_clock::now();
     const auto packing = solver(instance);
@@ -26,13 +25,12 @@ void runSolver(
 
 int main()
 {
-    vmp::InstanceLoader loader("../resource/gauss");
-    loader.loadInstanceData(1, "capacity", "tiles");
+    vmp::GeneralInstanceLoader loader("../resource/gauss");
+    loader.load(1, "capacity", "tiles");
 
-    const auto instance =
-        std::make_shared<vmp::GeneralInstance>(loader.makeInstances().front());
+    const auto instance = loader.makeGeneralInstances().front();
 
-    std::cout << *instance << std::endl;
+    std::cout << instance << std::endl;
 
     runSolver("Next Fit", vmp::solveByNextFit, instance);
     runSolver("First Fit", vmp::solveByFirstFit, instance);

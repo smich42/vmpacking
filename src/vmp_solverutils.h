@@ -12,13 +12,13 @@
 namespace vmp
 {
 
-double calculateRelSize(const std::shared_ptr<Guest> &guest,
+double calculateRelSize(const Guest &guest,
                         const std::unordered_map<int, int> &pageFreq);
 
-double calculateSizeRelRatio(const std::shared_ptr<Guest> &guest,
+double calculateSizeRelRatio(const Guest &guest,
                              const std::unordered_map<int, int> &pageFreq);
 
-double countGuestPagesPlaced(const std::shared_ptr<Guest> &guest,
+double countGuestPagesPlaced(const Guest &guest,
                              const std::vector<std::shared_ptr<Host>> &hosts);
 
 template <SharedPtrIterator<Guest> GuestIt>

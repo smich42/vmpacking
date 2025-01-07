@@ -1,4 +1,4 @@
-#include <vmp_instanceloader.h>
+#include <vmp_generalinstanceloader.h>
 
 #include <filesystem>
 #include <fstream>
@@ -11,7 +11,7 @@ using json = nlohmann::json;
 namespace vmp
 {
 
-InstanceLoader::InstanceLoader(std::string directory)
+GeneralInstanceLoader::GeneralInstanceLoader(std::string directory)
     : directory(std::move(directory))
 {
 }
@@ -23,9 +23,9 @@ static void assertHasFieldName(const json &obj, const std::string &field_name)
     }
 }
 
-void InstanceLoader::loadInstanceData(const int max_instances,
-                                      const std::string &capacity_field_name,
-                                      const std::string &guests_field_name)
+void GeneralInstanceLoader::load(const int max_instances,
+                                 const std::string &capacity_field_name,
+                                 const std::string &guests_field_name)
 {
     namespace fs = std::filesystem;
 
@@ -62,7 +62,8 @@ void InstanceLoader::loadInstanceData(const int max_instances,
     }
 }
 
-std::vector<GeneralInstance> InstanceLoader::makeInstances() const
+std::vector<GeneralInstance>
+GeneralInstanceLoader::makeGeneralInstances() const
 {
     assert(capacityData.size() == guestData.size());
 

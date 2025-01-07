@@ -1,16 +1,16 @@
 #ifndef VMP_MAXIMISERS_H
 #define VMP_MAXIMISERS_H
 
+#include <vmp_packing.h>
+
 namespace vmp
 {
 
-/**
- * Solvers for the VM-MAXIMISATION problem
- */
-class Maximisers
-{
-  public:
-};
+Packing maximiseByLocalSearch(
+    const GeneralInstance &instance,
+    std::function<Host(std::vector<std::shared_ptr<Guest>> guests,
+                       int capacity)>
+        localMaximiser);
 
 }  // namespace vmp
 

@@ -8,31 +8,31 @@
 namespace vmp
 {
 
-double calculateRelSize(const std::shared_ptr<Guest> &guest,
+double calculateRelSize(const Guest &guest,
                         const std::unordered_map<int, int> &pageFreq)
 {
-    return std::accumulate(guest->pages.begin(), guest->pages.end(), 0.0,
+    return std::accumulate(guest.pages.begin(), guest.pages.end(), 0.0,
                            [&](const double sum, const int page) {
                                return sum + 1.0 / static_cast<double>(
                                                       pageFreq.at(page));
                            });
 }
 
-double calculateSizeRelRatio(const std::shared_ptr<Guest> &guest,
+double calculateSizeRelRatio(const Guest &guest,
                              const std::unordered_map<int, int> &pageFreq)
 {
-    return static_cast<double>(guest->pageCount()) /
+    return static_cast<double>(guest.pageCount()) /
            calculateRelSize(guest, pageFreq);
 }
 
-double countGuestPagesPlaced(const std::shared_ptr<Guest> &guest,
+double countGuestPagesPlaced(const Guest &guest,
                              const std::vector<std::shared_ptr<Host>> &hosts)
 {
     const auto frequencies =
         calculatePageFrequencies(hosts.begin(), hosts.end());
 
     int count = 0;
-    for (int page : guest->pages) {
+    for (int page : guest.pages) {
         if (frequencies.contains(page)) {
             ++count;
         }

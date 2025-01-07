@@ -7,15 +7,15 @@
 namespace vmp
 {
 
-class InstanceLoader
+class GeneralInstanceLoader
 {
   public:
-    explicit InstanceLoader(std::string directory);
+    explicit GeneralInstanceLoader(std::string directory);
 
-    void loadInstanceData(int max_instances = -1,
-                          const std::string &capacity_field_name = "capacity",
-                          const std::string &guests_field_name = "guests");
-    [[nodiscard]] std::vector<GeneralInstance> makeInstances() const;
+    void load(int max_instances = -1,
+              const std::string &capacity_field_name = "capacity",
+              const std::string &guests_field_name = "guests");
+    [[nodiscard]] std::vector<GeneralInstance> makeGeneralInstances() const;
 
   private:
     const std::string directory;
