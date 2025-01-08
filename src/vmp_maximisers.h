@@ -1,70 +1,98 @@
 #ifndef VMP_MAXIMISERS_H
 #define VMP_MAXIMISERS_H
 
+#include <numeric>
 #include <vmp_iterators.h>
 #include <vmp_packing.h>
 
 namespace vmp
 {
 
-template <PairIterator<std::shared_ptr<Guest>, int> GuestProfitIt>
-Packing maximiseByLocalSearch(
-    const GeneralInstance &instance, const size_t allowedHosts,
-    std::function<Host(GuestProfitIt, GuestProfitIt, size_t)> localMaximiser,
-    const double localMaximiserBeta, const double epsilon)
+static std::optional<std::vector<std::pair<std::shared_ptr<Guest>, int>>>
+findMostEfficientCluster(const std::map<std::shared_ptr<Guest>, int> &unplaced,
+                         const Host &host, const int clusterSize)
 {
-    std::vector<std::shared_ptr<Host>> hosts;
-    hosts.reserve(allowedHosts);
-    for (size_t i = 0; i < allowedHosts; i++) {
-        hosts.push_back(std::make_shared<Host>(instance.capacity));
-    }
+    std::vector<bool> selector(unplaced.size());
+    std::fill(selector.end() - clusterSize, selector.end(), true);
 
-    const size_t iterations = std::ceil(
-        1.0 / (localMaximiserBeta * static_cast<double>(allowedHosts)) *
-        std::log(1.0 / epsilon));
+    std::optional<std::vector<std::pair<std::shared_ptr<Guest>, int>>>
+        bestCluster;
+    double bestClusterValue = 0.;
 
-    for (size_t _ = 0; _ < iterations; ++_) {
-        size_t maxImprovement = 0;
-        size_t mostImprovableIndex = 0;
-        std::shared_ptr<Host> mostImprovingCandidate;
+    do {
+        std::vector<std::pair<std::shared_ptr<Guest>, int>> candidateSet;
 
-        for (size_t i = 0; i < hosts.size(); i++) {
-            std::vector<std::pair<std::shared_ptr<Guest>, int>>
-                guestsWithValues;
-
-            for (const auto &guest : instance.guests) {
-                int value = 0;
-                for (const auto &host : hosts) {
-                    if (host != hosts[i] && host->hasGuest(guest)) {
-                        value = 1;
-                        break;
-                    }
-                }
-                guestsWithValues.emplace_back(guest, value);
-            }
-
-            Host candidate =
-                localMaximiser(guestsWithValues.begin(),
-                               guestsWithValues.end(), instance.capacity);
-
-            const size_t improvement =
-                candidate.guestCount() - hosts[i]->guestCount();
-
-            if (improvement > maxImprovement) {
-                maxImprovement = improvement;
-                mostImprovableIndex = i;
-                mostImprovingCandidate = std::make_shared<Host>(candidate);
+        auto it = unplaced.begin();
+        for (size_t i = 0; i < unplaced.size(); ++i, ++it) {
+            if (selector[i]) {
+                candidateSet.emplace_back(*it);
             }
         }
 
-        if (maxImprovement <= 0) {
+        if (!host.accommodatesGuests(candidateSet.begin(),
+                                     candidateSet.end())) {
+            continue;
+        }
+
+        const double rewardSum =
+            std::accumulate(candidateSet.begin(), candidateSet.end(), 0.,
+                            [](const double acc, const auto &guest) {
+                                return acc + guest.second;
+                            });
+        const double clusterValue =
+            rewardSum / static_cast<double>(
+                            1 + host.countPagesWithGuests(candidateSet.begin(),
+                                                          candidateSet.end()));
+
+        if (clusterValue > bestClusterValue) {
+            bestCluster = std::move(candidateSet);
+            bestClusterValue = clusterValue;
+        }
+    } while (std::next_permutation(selector.begin(), selector.end()));
+
+    return bestCluster;
+}
+
+template <typename GuestProfitIt, typename K = std::shared_ptr<Guest>,
+          typename V = int>
+    requires PairIterator<GuestProfitIt, K, V>
+Host maximiseSingleHostBySimpleEfficiency(GuestProfitIt guestsBegin,
+                                          GuestProfitIt guestsEnd,
+                                          const size_t capacity,
+                                          int initialClusterSize = 1)
+{
+    Host host(capacity);
+    std::map unplaced(guestsBegin, guestsEnd);
+
+    while (true) {
+        auto bestGuestSet =
+            findMostEfficientCluster(unplaced, host, initialClusterSize);
+
+        while (!bestGuestSet.has_value() && initialClusterSize > 0) {
+            --initialClusterSize;
+            bestGuestSet =
+                findMostEfficientCluster(unplaced, host, initialClusterSize);
+        }
+
+        if (!bestGuestSet.has_value()) {
             break;
         }
-        hosts[mostImprovableIndex] = mostImprovingCandidate;
+
+        for (const auto &guest : bestGuestSet.value()) {
+            unplaced.erase(guest.first);
+            host.addGuest(guest.first);
+        }
     }
 
-    return Packing(hosts);
+    return host;
 }
+
+Packing maximiseByLocalSearch(const GeneralInstance &instance,
+                              size_t allowedHostCount,
+                              Host (*localMaximiser)(GuestProfitVecIt,
+                                                     GuestProfitVecIt, size_t),
+                              double localApproximationRatio, double epsilon);
+
 }  // namespace vmp
 
 #endif  // VMP_MAXIMISERS_H

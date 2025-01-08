@@ -22,10 +22,9 @@ double countGuestPagesPlaced(const Guest &guest,
                              const std::vector<std::shared_ptr<Host>> &hosts);
 
 template <SharedPtrIterator<Guest> GuestIt>
-void decantGuests(
-    std::vector<std::shared_ptr<Host>> &hosts,
-    const std::function<std::vector<std::vector<std::shared_ptr<Guest>>>(
-        GuestIt, GuestIt)> &partitionGuests)
+void decantGuests(std::vector<std::shared_ptr<Host>> &hosts,
+                  std::vector<std::vector<std::shared_ptr<Guest>>> (
+                      *partitionGuests)(GuestIt, GuestIt))
 {
     for (auto leftIt = hosts.begin(); leftIt != hosts.end(); ++leftIt) {
         const auto &leftHost = *leftIt;

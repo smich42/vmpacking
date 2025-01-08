@@ -40,7 +40,7 @@ void Host::clearGuests()
 
 bool Host::accommodatesGuest(const Guest &guest) const
 {
-    return countPagesWith(guest) <= capacity;
+    return countPagesWithGuest(guest) <= capacity;
 }
 
 size_t Host::pageFrequency(const int page) const
@@ -53,7 +53,7 @@ size_t Host::pageCount() const
     return pageFreq.size();
 }
 
-size_t Host::countPagesWith(const Guest &guest) const
+size_t Host::countPagesWithGuest(const Guest &guest) const
 {
     return pageCount() + guest.pageCount() - guest.countPagesOn(*this);
 }

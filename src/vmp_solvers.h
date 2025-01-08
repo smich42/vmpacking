@@ -17,10 +17,9 @@ Packing solveByBestFusion(const GeneralInstance &instance);
 
 Packing solveByOverloadAndRemove(const GeneralInstance &instance);
 
-Packing
-solveByMaximiser(const GeneralInstance &instance,
-                 const std::function<Packing(const GeneralInstance &instance,
-                                             size_t allowedHosts)> &maximiser);
+Packing solveByMaximiser(const GeneralInstance &instance,
+                         Packing (*maximiser)(const GeneralInstance &instance,
+                                              size_t allowedHostCount));
 
 Packing solveTree(const TreeInstance &instance);
 

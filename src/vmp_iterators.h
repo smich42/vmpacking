@@ -1,6 +1,8 @@
 #ifndef VMP_ITERATORS_H
 #define VMP_ITERATORS_H
 
+#include <vmp_guest.h>
+
 #include <memory>
 
 namespace vmp
@@ -13,6 +15,9 @@ concept SharedPtrIterator =
 template <typename It, typename K, typename V>
 concept PairIterator = std::input_iterator<It> &&
                        std::same_as<std::iter_value_t<It>, std::pair<K, V>>;
+
+using GuestProfitVecIt =
+    std::vector<std::pair<std::shared_ptr<Guest>, int>>::iterator;
 
 }  // namespace vmp
 

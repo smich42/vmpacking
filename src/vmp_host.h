@@ -1,6 +1,8 @@
 #ifndef SOLVERS_HOST_H
 #define SOLVERS_HOST_H
 
+#include "vmp_iterators.h"
+
 #include <map>
 #include <set>
 #include <vmp_guest.h>
@@ -14,9 +16,59 @@ class Host
     explicit Host(size_t capacity);
 
     [[nodiscard]] bool accommodatesGuest(const Guest &guest) const;
+
+    template <SharedPtrIterator<Guest> GuestIt>
+    bool accommodatesGuests(GuestIt guestsBegin, GuestIt guestsEnd) const
+    {
+        return countPagesWithGuests(guestsBegin, guestsEnd) <= capacity;
+    }
+
+    template <typename GuestProfitIt, typename K = std::shared_ptr<Guest>,
+              typename V = int>
+        requires PairIterator<GuestProfitIt, K, V>
+    bool accommodatesGuests(GuestProfitIt guestsBegin,
+                            GuestProfitIt guestsEnd) const
+    {
+        return countPagesWithGuests(guestsBegin, guestsEnd) <= capacity;
+    }
+
     [[nodiscard]] size_t pageFrequency(int page) const;
     [[nodiscard]] size_t pageCount() const;
-    [[nodiscard]] size_t countPagesWith(const Guest &guest) const;
+
+    template <SharedPtrIterator<Guest> GuestIt>
+    [[nodiscard]] size_t countPagesWithGuests(GuestIt guestsBegin,
+                                              GuestIt guestsEnd) const
+    {
+        std::set<int> newPages;
+        for (auto it = guestsBegin; it != guestsEnd; ++it) {
+            for (const int page : (*it)->pages) {
+                if (!pageFreq.contains(page)) {
+                    newPages.insert(page);
+                }
+            }
+        }
+        return newPages.size() + pageFreq.size();
+    }
+
+    template <typename GuestProfitIt, typename K = std::shared_ptr<Guest>,
+              typename V = int>
+        requires PairIterator<GuestProfitIt, K, V>
+    [[nodiscard]] size_t countPagesWithGuests(GuestProfitIt guestsBegin,
+                                              GuestProfitIt guestsEnd) const
+    {
+        std::set<int> newPages;
+        for (auto it = guestsBegin; it != guestsEnd; ++it) {
+            for (const int page : it->first->pages) {
+                if (!pageFreq.contains(page)) {
+                    newPages.insert(page);
+                }
+            }
+        }
+        return newPages.size() + pageFreq.size();
+    }
+
+    [[nodiscard]] size_t countPagesWithGuest(const Guest &guest) const;
+
     [[nodiscard]] size_t guestCount() const;
     [[nodiscard]] bool isOverfull() const;
     [[nodiscard]] bool hasGuest(const std::shared_ptr<Guest> &guest) const;

@@ -1,5 +1,6 @@
 #include <vmp_solvers.h>
 
+#include <cassert>
 #include <numeric>
 #include <ostream>
 #include <vmp_solverutils.h>
@@ -258,29 +259,31 @@ Packing solveByOverloadAndRemove(const GeneralInstance &instance)
     return Packing(hosts);
 }
 
-Packing
-solveByMaximiser(const GeneralInstance &instance,
-                 const std::function<Packing(const GeneralInstance &instance,
-                                             size_t maxHosts)> &maximiser)
+Packing solveByMaximiser(const GeneralInstance &instance,
+                         Packing (*maximiser)(const GeneralInstance &instance,
+                                              size_t maxHosts))
 {
-    size_t maxHosts = 0;
-    size_t minHosts = instance.guests.size();
-    Packing bestPacking({});
+    size_t minHosts = 0;
+    size_t maxHosts = instance.guests.size() + 1;
+
+    std::shared_ptr<Packing> bestPacking;
 
     while (minHosts <= maxHosts) {
-        const size_t allowedHosts = (minHosts + maxHosts) / 2;
-        auto packingCandidate = maximiser(instance, allowedHosts);
+        const size_t allowedHostCount = (minHosts + maxHosts) / 2;
+        auto packingCandidate = maximiser(instance, allowedHostCount);
 
         if (packingCandidate.countGuests() == instance.guests.size()) {
-            maxHosts = allowedHosts;
-            bestPacking = std::move(packingCandidate);
+            bestPacking =
+                std::make_shared<Packing>(std::move(packingCandidate));
+            maxHosts = allowedHostCount - 1;
         }
         else {  // Not all guests could be packed
-            minHosts = allowedHosts + 1;
+            minHosts = allowedHostCount + 1;
         }
     }
 
-    return bestPacking;
+    assert(bestPacking != nullptr);
+    return *bestPacking;
 }
 
 }  // namespace vmp
