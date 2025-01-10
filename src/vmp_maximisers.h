@@ -2,6 +2,7 @@
 #define VMP_MAXIMISERS_H
 
 #include <numeric>
+#include <ranges>
 #include <vmp_iterators.h>
 #include <vmp_packing.h>
 
@@ -42,8 +43,12 @@ findMaxValueCluster(
             }
         }
 
-        if (!host.accommodatesGuests(candidateSet.begin(),
-                                     candidateSet.end())) {
+        const auto candidateView =
+            std::ranges::subrange(candidateSet.begin(), candidateSet.end()) |
+            std::views::transform([](const auto &pair) { return pair.first; });
+
+        if (!host.accommodatesGuests(candidateView.begin(),
+                                     candidateView.end())) {
             continue;
         }
 
@@ -52,10 +57,11 @@ findMaxValueCluster(
                             [](const double acc, const auto &guest) {
                                 return acc + guest.second;
                             });
+
         const double clusterValue =
-            rewardSum / static_cast<double>(
-                            1 + host.countPagesWithGuests(candidateSet.begin(),
-                                                          candidateSet.end()));
+            rewardSum / static_cast<double>(1 + host.countPagesWithGuests(
+                                                    candidateView.begin(),
+                                                    candidateView.end()));
 
         if (clusterValue > bestClusterValue) {
             bestCluster = std::move(candidateSet);

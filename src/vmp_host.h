@@ -1,7 +1,7 @@
 #ifndef SOLVERS_HOST_H
 #define SOLVERS_HOST_H
 
-#include "vmp_iterators.h"
+#include <vmp_iterators.h>
 
 #include <map>
 #include <set>
@@ -23,17 +23,8 @@ class Host
         return countPagesWithGuests(guestsBegin, guestsEnd) <= capacity;
     }
 
-    template <typename GuestProfitIt,
-              typename K = std::shared_ptr<const Guest>, typename V = int>
-        requires PairIterator<GuestProfitIt, K, V>
-    bool accommodatesGuests(GuestProfitIt guestsBegin,
-                            GuestProfitIt guestsEnd) const
-    {
-        return countPagesWithGuests(guestsBegin, guestsEnd) <= capacity;
-    }
-
-    [[nodiscard]] size_t pageFrequency(int page) const;
-    [[nodiscard]] size_t pageCount() const;
+    [[nodiscard]] size_t countPagesNotOn(const Guest &guest) const;
+    [[nodiscard]] size_t countPagesWithGuest(const Guest &guest) const;
 
     template <SharedPtrIterator<const Guest> GuestIt>
     [[nodiscard]] size_t countPagesWithGuests(GuestIt guestsBegin,
@@ -50,26 +41,8 @@ class Host
         return newPages.size() + pageFreq.size();
     }
 
-    template <typename GuestProfitIt,
-              typename K = std::shared_ptr<const Guest>, typename V = int>
-        requires PairIterator<GuestProfitIt, K, V>
-    [[nodiscard]] size_t countPagesWithGuests(GuestProfitIt guestsBegin,
-                                              GuestProfitIt guestsEnd) const
-    {
-        std::set<int> newPages;
-        for (; guestsBegin != guestsEnd; ++guestsBegin) {
-            for (const int page : guestsBegin->first->pages) {
-                if (!pageFreq.contains(page)) {
-                    newPages.insert(page);
-                }
-            }
-        }
-        return newPages.size() + pageFreq.size();
-    }
-
-    [[nodiscard]] size_t countPagesWithGuest(const Guest &guest) const;
-    size_t countPagesNotOn(const Guest &guest) const;
-
+    [[nodiscard]] size_t pageFrequency(int page) const;
+    [[nodiscard]] size_t pageCount() const;
     [[nodiscard]] size_t guestCount() const;
     [[nodiscard]] bool isOverfull() const;
     [[nodiscard]] bool
