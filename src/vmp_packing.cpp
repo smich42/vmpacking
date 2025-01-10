@@ -1,5 +1,7 @@
 #include <vmp_packing.h>
 
+#include <unordered_set>
+
 namespace vmp
 {
 
@@ -8,11 +10,26 @@ Packing::Packing(const std::vector<std::shared_ptr<Host>> &hosts)
 {
 }
 
-bool Packing::validate() const
+bool Packing::validateForInstance(const GeneralInstance &instance) const
 {
-    return std::ranges::none_of(hosts, [](const auto &host) {
-        return host->isOverfull() || host->guests.empty();
-    });
+    std::unordered_set<std::shared_ptr<const Guest>> placedGuests;
+    for (const auto &host : hosts) {
+        if (host->guests.empty()) {
+            return false;
+        }
+        if (host->isOverfull()) {
+            return false;
+        }
+        for (const auto &guest : host->guests) {
+            placedGuests.insert(guest);
+        }
+    }
+    for (const auto &guest : instance.guests) {
+        if (!placedGuests.contains(guest)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 size_t Packing::countGuests() const

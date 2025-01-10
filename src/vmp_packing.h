@@ -17,7 +17,7 @@ class Packing
 
     Packing &operator=(Packing &&other) noexcept = default;
 
-    [[nodiscard]] bool validate() const;
+    [[nodiscard]] bool validateForInstance(const GeneralInstance &instance) const;
     [[nodiscard]] size_t countGuests() const;
     [[nodiscard]] size_t hostCount() const;
 

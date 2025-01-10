@@ -21,7 +21,8 @@ void runSolver(vmp::Packing (*solver)(const vmp::GeneralInstance &),
     std::cout << "=== " << name << " ===" << std::endl;
     std::cout << "Elapsed: " << elapsed << " s\n";
     std::cout << "Result: " << packing.hostCount() << ", "
-              << (packing.validate() ? "valid" : "invalid") << std::endl;
+              << (packing.validateForInstance(instance) ? "valid" : "invalid")
+              << std::endl;
 }
 
 void runSingleHostMaximiser(vmp::Host (*maximiser)(vmp::GuestProfitVecIt,
@@ -51,7 +52,7 @@ void runSingleHostMaximiser(vmp::Host (*maximiser)(vmp::GuestProfitVecIt,
     std::cout << "=== " << name << " ===" << std::endl;
     std::cout << "Elapsed: " << elapsed << " s\n";
     std::cout << "Result: " << host.guestCount() << " guests on host, "
-              << (!host.isOverfull() ? "valid" : "invalid") << std::endl;
+              << (!host.isOverfull() ? "valid" : "INVALID") << std::endl;
 }
 
 int main()
