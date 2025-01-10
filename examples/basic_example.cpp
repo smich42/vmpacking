@@ -71,30 +71,28 @@ int main()
     runSingleHostMaximiser(
         [](vmp::GuestProfitVecIt guestsBegin, vmp::GuestProfitVecIt guestsEnd,
            const size_t capacity) {
-            return maximiseSingleHostBySimpleEfficiency(guestsBegin, guestsEnd,
-                                                        capacity, 1);
+            return maximiseOneHostByClusterValues(guestsBegin, guestsEnd,
+                                                  capacity, 1);
         },
         "GSAVVM", instance);
 
     constexpr int clusterSize = 1;
+    constexpr double oneHostApprox = 25;  // Throwaway, base it on clusterSize
+    constexpr double epsilon = 0.0001;  // Throwaway, base it on oneHostApprox
 
+    // Compose one host maximiser -> local search maximiser -> solver
     runSolver(
-        [](const vmp::GeneralInstance &instance) {
-            return solveByMaximiser(
-                instance, [](const vmp::GeneralInstance &instance,
-                             const size_t allowedHostCount) {
-                    return maximiseByLocalSearch(
-                        instance, allowedHostCount,
-                        [](const vmp::GuestProfitVecIt guestsBegin,
-                           const vmp::GuestProfitVecIt guestsEnd,
-                           const size_t capacity) {
-                            return maximiseSingleHostBySimpleEfficiency(
-                                guestsBegin, guestsEnd, capacity, clusterSize);
-                        },
-                        static_cast<double>(instance.guests.size()) /
-                            clusterSize,
-                        0.0001);
-                });
+        [](const auto &inst) {
+            return solveByMaximiser(inst, [](const auto &inst,
+                                             const size_t hostCount) {
+                return maximiseByLocalSearch(
+                    inst, hostCount,
+                    [](const auto beg, const auto end, const size_t cap) {
+                        return maximiseOneHostByClusterValues(beg, end, cap,
+                                                              clusterSize);
+                    },
+                    oneHostApprox, epsilon);
+            });
         },
         "Local Search", instance);
     return 0;

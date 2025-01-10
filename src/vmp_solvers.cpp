@@ -31,12 +31,6 @@ static void proceedNextFit(size_t capacity, GuestIt guestsBegin,
     }
 }
 
-/**
- * Solves an instance of VM-PACK by Next Fit
- *
- * @param instance the instance to solve
- * @return a valid packing
- */
 Packing solveByNextFit(const GeneralInstance &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
@@ -76,12 +70,6 @@ static void proceedFirstFit(size_t capacity, GuestIt guestsBegin,
     }
 }
 
-/**
- * Solves an instance of VM-PACK by First Fit
- *
- * @param instance the instance to solve
- * @return a valid packing
- */
 Packing solveByFirstFit(const GeneralInstance &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
@@ -142,13 +130,6 @@ static void proceedBestFusion(size_t capacity, GuestIt guestsBegin,
     decantGuests<SetGuestIt>(hosts, makeIndividualGuestPartitions<SetGuestIt>);
 }
 
-/**
- * Solves an instance of VM-PACK by "Best Fusion" of Grange, et
- * al. (2021)
- *
- * @param instance the instance to solve
- * @return a valid packing
- */
 Packing solveByBestFusion(const GeneralInstance &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
@@ -243,13 +224,6 @@ static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
     decantGuests<SetGuestIt>(hosts, makeIndividualGuestPartitions<SetGuestIt>);
 }
 
-/**
- * Solves an instance of VM-PACK by "Overload-and-Remove" of Grange, et
- * al. (2021)
- *
- * @param instance the instance to solve
- * @return a valid packing
- */
 Packing solveByOverloadAndRemove(const GeneralInstance &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
@@ -257,6 +231,11 @@ Packing solveByOverloadAndRemove(const GeneralInstance &instance)
                              instance.guests.end(), hosts);
 
     return Packing(hosts);
+}
+
+Packing solveByLocalityScore(const GeneralInstance &instance)
+{
+
 }
 
 Packing solveByMaximiser(const GeneralInstance &instance,
@@ -282,7 +261,10 @@ Packing solveByMaximiser(const GeneralInstance &instance,
         }
     }
 
-    assert(bestPacking != nullptr);
+    if (bestPacking == nullptr) {
+        throw std::runtime_error(
+            "No valid packing found; is a guest larger than the capacity?");
+    }
     return *bestPacking;
 }
 

@@ -5,8 +5,8 @@ namespace vmp
 
 Packing maximiseByLocalSearch(
     const GeneralInstance &instance, const size_t allowedHostCount,
-    Host (*localMaximiser)(GuestProfitVecIt, GuestProfitVecIt, size_t),
-    const double localApproximationRatio, const double epsilon)
+    Host (*oneHostMaximiser)(GuestProfitVecIt, GuestProfitVecIt, size_t),
+    const double oneHostApproxRatio, const double epsilon)
 {
     std::vector initialPlacements(instance.guests.size(), false);
 
@@ -27,8 +27,10 @@ Packing maximiseByLocalSearch(
         hosts.push_back(host);
     }
 
+    // Fleischer, et al. iteration count for achieving
+    // (oneHostApproxRatio/(oneHostApproxRatio + 1) + epsilon) approximation
     const size_t iterations = std::abs(static_cast<int>(std::ceil(
-        1.0 / localApproximationRatio * static_cast<double>(allowedHostCount) *
+        1.0 / oneHostApproxRatio * static_cast<double>(allowedHostCount) *
         std::log(1.0 / epsilon))));
 
     for (size_t _ = 0; _ < iterations; ++_) {
@@ -52,10 +54,10 @@ Packing maximiseByLocalSearch(
             }
 
             Host candidate =
-                localMaximiser(guestsWithValues.begin(),
-                               guestsWithValues.end(), instance.capacity);
-            const int improvement =
-                candidate.guestCount() - hosts[i]->guestCount();
+                oneHostMaximiser(guestsWithValues.begin(),
+                                 guestsWithValues.end(), instance.capacity);
+            const int improvement = static_cast<int>(candidate.guestCount()) -
+                                    hosts[i]->guestCount();
 
             if (improvement > maxImprovement) {
                 maxImprovement = improvement;
