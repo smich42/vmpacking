@@ -68,6 +68,7 @@ class Host
     }
 
     [[nodiscard]] size_t countPagesWithGuest(const Guest &guest) const;
+    size_t countPagesNotOn(const Guest &guest) const;
 
     [[nodiscard]] size_t guestCount() const;
     [[nodiscard]] bool isOverfull() const;

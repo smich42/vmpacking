@@ -18,7 +18,9 @@ double calculateRelSize(const Guest &guest,
 double calculateSizeRelRatio(const Guest &guest,
                              const std::unordered_map<int, int> &pageFreq);
 
-double calculateLocalityScore(const Guest &guest);
+double
+calculateLocalityScore(const Guest &guest, const std::shared_ptr<Host> &host,
+                       const std::vector<std::shared_ptr<Host>> &allHosts);
 
 double countGuestPagesPlaced(const Guest &guest,
                              const std::vector<std::shared_ptr<Host>> &hosts);

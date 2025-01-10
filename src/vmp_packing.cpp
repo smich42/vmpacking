@@ -1,4 +1,3 @@
-#include <numeric>
 #include <vmp_packing.h>
 
 namespace vmp

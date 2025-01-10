@@ -26,22 +26,21 @@ double calculateSizeRelRatio(const Guest &guest,
 }
 
 double
-calculateLocalityScore(const Guest &guest, const size_t hostIndex,
+calculateLocalityScore(const Guest &guest, const std::shared_ptr<Host> &host,
                        const std::vector<std::shared_ptr<Host>> &allHosts)
 {
-    const size_t pagesOnHost = guest.countPagesOn(*allHosts[hostIndex]);
+    const size_t pagesOnHost = guest.countPagesOn(*host);
 
-    size_t minPlacedOnOtherHost = std::numeric_limits<size_t>::max();
-    for (int i = 0; i < allHosts.size(); ++i) {
-        if (i == hostIndex) {
-            continue;
+    size_t minDifferenceWithOtherHost = std::numeric_limits<size_t>::max();
+    for (const auto &otherHost : allHosts) {
+        if (host != otherHost) {
+            minDifferenceWithOtherHost = std::min(
+                minDifferenceWithOtherHost, otherHost->countPagesNotOn(guest));
         }
-        minPlacedOnOtherHost =
-            std::min(minPlacedOnOtherHost, guest.countPagesOn(*allHosts[i]));
     }
 
-    return static_cast<double>(pagesOnHost + minPlacedOnOtherHost) /
-           static_cast<double>(guest.pageCount());
+    return static_cast<double>(pagesOnHost + minDifferenceWithOtherHost) /
+           std::sqrt(guest.pageCount());
 }
 
 double

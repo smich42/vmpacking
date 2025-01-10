@@ -17,9 +17,9 @@ namespace vmp
  * @param hosts the partial hosts vector to use
  */
 template <SharedPtrIterator<const Guest> GuestIt>
-static void proceedNextFit(size_t capacity, GuestIt guestsBegin,
-                           GuestIt guestsEnd,
-                           std::vector<std::shared_ptr<Host>> &hosts)
+static void proceedByNextFit(size_t capacity, GuestIt guestsBegin,
+                             GuestIt guestsEnd,
+                             std::vector<std::shared_ptr<Host>> &hosts)
 {
     for (; guestsBegin != guestsEnd; ++guestsBegin) {
         const auto &guest = *guestsBegin;
@@ -33,8 +33,8 @@ static void proceedNextFit(size_t capacity, GuestIt guestsBegin,
 Packing solveByNextFit(const GeneralInstance &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
-    proceedNextFit(instance.capacity, instance.guests.begin(),
-                   instance.guests.end(), hosts);
+    proceedByNextFit(instance.capacity, instance.guests.begin(),
+                     instance.guests.end(), hosts);
 
     return Packing(hosts);
 }
@@ -50,9 +50,9 @@ Packing solveByNextFit(const GeneralInstance &instance)
  * @param hosts the partial hosts vector to use
  */
 template <SharedPtrIterator<const Guest> GuestIt>
-static void proceedFirstFit(size_t capacity, GuestIt guestsBegin,
-                            GuestIt guestsEnd,
-                            std::vector<std::shared_ptr<Host>> &hosts)
+static void proceedByFirstFit(size_t capacity, GuestIt guestsBegin,
+                              GuestIt guestsEnd,
+                              std::vector<std::shared_ptr<Host>> &hosts)
 {
     for (; guestsBegin != guestsEnd; ++guestsBegin) {
         const auto &guest = *guestsBegin;
@@ -72,8 +72,8 @@ static void proceedFirstFit(size_t capacity, GuestIt guestsBegin,
 Packing solveByFirstFit(const GeneralInstance &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
-    proceedFirstFit(instance.capacity, instance.guests.begin(),
-                    instance.guests.end(), hosts);
+    proceedByFirstFit(instance.capacity, instance.guests.begin(),
+                      instance.guests.end(), hosts);
 
     return Packing(hosts);
 }
@@ -89,9 +89,9 @@ Packing solveByFirstFit(const GeneralInstance &instance)
  * @param hosts the partial hosts vector to use
  */
 template <SharedPtrIterator<const Guest> GuestIt>
-static void proceedBestFusion(size_t capacity, GuestIt guestsBegin,
-                              GuestIt guestsEnd,
-                              std::vector<std::shared_ptr<Host>> &hosts)
+static void proceedByBestFusion(size_t capacity, GuestIt guestsBegin,
+                                GuestIt guestsEnd,
+                                std::vector<std::shared_ptr<Host>> &hosts)
 {
     const auto frequencies = calculatePageFrequencies(guestsBegin, guestsEnd);
 
@@ -121,7 +121,8 @@ static void proceedBestFusion(size_t capacity, GuestIt guestsBegin,
         bestHost->addGuest(*guestsBegin);
     }
 
-    // Use ordered set for deterministic behaviour
+    // TODO ordered set only provides quasi-deterministic behaviour; depends on
+    // raw pointer addresses
     using SetGuestIt = std::set<std::shared_ptr<const Guest>>::iterator;
     decantGuests<SetGuestIt>(hosts, makeOneGuestPartition<SetGuestIt>);
     decantGuests<SetGuestIt>(
@@ -132,8 +133,8 @@ static void proceedBestFusion(size_t capacity, GuestIt guestsBegin,
 Packing solveByBestFusion(const GeneralInstance &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
-    proceedBestFusion(instance.capacity, instance.guests.begin(),
-                      instance.guests.end(), hosts);
+    proceedByBestFusion(instance.capacity, instance.guests.begin(),
+                        instance.guests.end(), hosts);
 
     return Packing(hosts);
 }
@@ -149,23 +150,20 @@ Packing solveByBestFusion(const GeneralInstance &instance)
  * @param hosts the partial hosts vector to use
  */
 template <SharedPtrIterator<const Guest> GuestIt>
-static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
-                                     GuestIt guestsEnd,
-                                     std::vector<std::shared_ptr<Host>> &hosts)
+static void
+proceedByOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
+                           GuestIt guestsEnd,
+                           std::vector<std::shared_ptr<Host>> &hosts)
 {
-    std::deque<std::shared_ptr<const Guest>> unplacedGuests;
+    std::deque unplaced(guestsBegin, guestsEnd);
     std::map<std::shared_ptr<const Guest>, std::set<std::shared_ptr<Host>>>
         attemptedPlacements;
     const auto frequencies = calculatePageFrequencies(guestsBegin, guestsEnd);
 
-    for (; guestsBegin != guestsEnd; ++guestsBegin) {
-        unplacedGuests.emplace_back(*guestsBegin);
-    }
-
-    while (!unplacedGuests.empty()) {
+    while (!unplaced.empty()) {
         // Select best container based on relative size
-        const auto guest = unplacedGuests.front();
-        unplacedGuests.pop_front();
+        const auto guest = unplaced.front();
+        unplaced.pop_front();
 
         std::shared_ptr<Host> bestHost = nullptr;
         double bestRelSize = std::numeric_limits<double>::max();
@@ -197,7 +195,7 @@ static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
                     return calculateSizeRelRatio(*candidate, frequencies);
                 });
 
-            unplacedGuests.push_back(worstGuest);
+            unplaced.push_back(worstGuest);
             bestHost->removeGuest(worstGuest);
         }
     }
@@ -208,13 +206,12 @@ static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
             continue;
         }
         for (const auto &guest : host->guests) {
-            unplacedGuests.push_back(guest);
+            unplaced.push_back(guest);
         }
         host->clearGuests();
     }
 
-    proceedFirstFit(capacity, unplacedGuests.begin(), unplacedGuests.end(),
-                    hosts);
+    proceedByFirstFit(capacity, unplaced.begin(), unplaced.end(), hosts);
 
     using SetGuestIt = std::set<std::shared_ptr<const Guest>>::iterator;
     decantGuests<SetGuestIt>(hosts, makeOneGuestPartition<SetGuestIt>);
@@ -226,13 +223,54 @@ static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
 Packing solveByOverloadAndRemove(const GeneralInstance &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
-    proceedOverloadAndRemove(instance.capacity, instance.guests.begin(),
-                             instance.guests.end(), hosts);
+    proceedByOverloadAndRemove(instance.capacity, instance.guests.begin(),
+                               instance.guests.end(), hosts);
 
     return Packing(hosts);
 }
 
-Packing solveByLocalityScore(const GeneralInstance &instance) {}
+Packing solveByLocalityScore(const GeneralInstance &instance)
+{
+    std::vector<std::shared_ptr<Host>> hosts;
+    std::set unplaced(instance.guests.begin(), instance.guests.end());
+
+    while (!unplaced.empty()) {
+        std::shared_ptr<const Guest> largestGuest;
+        std::shared_ptr<const Guest> bestGuest;
+        std::shared_ptr<Host> bestHost;
+        double bestScore = std::numeric_limits<double>::min();
+
+        for (const auto &guest : unplaced) {
+            if (!largestGuest ||
+                guest->pageCount() > largestGuest->pageCount()) {
+                largestGuest = guest;
+            }
+
+            for (const auto &host : hosts) {
+                if (!host->accommodatesGuest(*guest)) {
+                    continue;
+                }
+                const double candidateScore =
+                    calculateLocalityScore(*guest, host, hosts);
+                if (candidateScore > bestScore) {
+                    bestGuest = guest;
+                    bestHost = host;
+                    bestScore = candidateScore;
+                }
+            }
+        }
+
+        if (!bestGuest) {
+            bestHost = std::make_shared<Host>(instance.capacity);
+            bestGuest = largestGuest;
+            hosts.push_back(bestHost);
+        }
+        bestHost->addGuest(bestGuest);
+        unplaced.erase(bestGuest);
+    }
+
+    return Packing(hosts);
+}
 
 Packing solveByMaximiser(const GeneralInstance &instance,
                          Packing (*maximiser)(const GeneralInstance &instance,
@@ -245,11 +283,10 @@ Packing solveByMaximiser(const GeneralInstance &instance,
 
     while (minHosts <= maxHosts) {
         const size_t allowedHostCount = (minHosts + maxHosts) / 2;
-        auto packingCandidate = maximiser(instance, allowedHostCount);
+        Packing candidate = maximiser(instance, allowedHostCount);
 
-        if (packingCandidate.countGuests() == instance.guestCount()) {
-            bestPacking =
-                std::make_shared<Packing>(std::move(packingCandidate));
+        if (candidate.countGuests() == instance.guestCount()) {
+            bestPacking = std::make_shared<Packing>(std::move(candidate));
             maxHosts = allowedHostCount - 1;
         }
         else {  // Not all guests could be packed

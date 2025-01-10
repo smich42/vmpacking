@@ -67,6 +67,7 @@ int main()
     runSolver(vmp::solveByFirstFit, "First Fit", instance);
     runSolver(vmp::solveByBestFusion, "Best Fusion", instance);
     runSolver(vmp::solveByOverloadAndRemove, "Overload and Remove", instance);
+    runSolver(vmp::solveByLocalityScore, "Locality Score", instance);
 
     runSingleHostMaximiser(
         [](vmp::GuestProfitVecIt guestsBegin, vmp::GuestProfitVecIt guestsEnd,

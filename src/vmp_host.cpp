@@ -58,6 +58,11 @@ size_t Host::countPagesWithGuest(const Guest &guest) const
     return pageCount() + guest.pageCount() - guest.countPagesOn(*this);
 }
 
+size_t Host::countPagesNotOn(const Guest &guest) const
+{
+    return pageCount() - guest.countPagesOn(*this);
+}
+
 size_t Host::guestCount() const
 {
     return guests.size();
