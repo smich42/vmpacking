@@ -122,32 +122,37 @@ inline bool guestsHaveSharedPage(const Guest &guest1, const Guest &guest2)
 }
 
 template <SharedPtrIterator<const Guest> GuestIt>
+static std::vector<std::shared_ptr<const Guest>>
+shareGraphDFS(GuestIt cur, GuestIt guestsEnd,
+              std::unordered_set<std::shared_ptr<const Guest>> &visited)
+{
+    std::vector<std::shared_ptr<const Guest>> component;
+    visited.insert(*cur);
+    component.push_back(*cur);
+
+    for (auto it = cur; it != guestsEnd; ++it) {
+        if (!visited.contains(*it) && guestsHaveSharedPage(**cur, **it)) {
+            // TODO could make this iterative
+            shareGraphDFS(it, guestsEnd, visited);
+        }
+    }
+
+    return component;
+}
+
+template <SharedPtrIterator<const Guest> GuestIt>
 std::vector<std::vector<std::shared_ptr<const Guest>>>
 makeShareGraphComponentGuestPartitions(GuestIt guestsBegin, GuestIt guestsEnd)
 {
     std::unordered_set<std::shared_ptr<const Guest>> visited;
     std::vector<std::vector<std::shared_ptr<const Guest>>> result;
 
-    std::function<void(GuestIt, std::vector<std::shared_ptr<const Guest>> &)>
-        dfs = [&](GuestIt cur,
-                  std::vector<std::shared_ptr<const Guest>> &component) {
-            visited.insert(*cur);
-            component.push_back(*cur);
-
-            for (auto it = cur; it != guestsEnd; ++it) {
-                if (!visited.contains(*it) &&
-                    guestsHaveSharedPage(**cur, **it)) {
-                    dfs(it, component);
-                }
-            }
-        };
-
     for (; guestsBegin != guestsEnd; ++guestsBegin) {
         if (visited.contains(*guestsBegin)) {
             continue;
         }
-        std::vector<std::shared_ptr<const Guest>> component;
-        dfs(guestsBegin, component);
+
+        const auto component = shareGraphDFS(guestsBegin, guestsEnd, visited);
         result.push_back(std::move(component));
     }
 
