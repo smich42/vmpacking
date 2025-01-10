@@ -39,11 +39,8 @@ void decantGuests(std::vector<std::shared_ptr<Host>> &hosts,
                                                     rightHost->guests.end());
 
             for (const auto &partition : partitions) {
-                const bool accommodatesAll =
-                    std::ranges::all_of(partition, [&](const auto &guest) {
-                        return leftHost->accommodatesGuest(*guest);
-                    });
-                if (!accommodatesAll) {
+                if (!leftHost->accommodatesGuests(partition.begin(),
+                                                  partition.end())) {
                     continue;
                 }
 

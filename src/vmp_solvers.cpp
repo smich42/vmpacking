@@ -57,7 +57,7 @@ static void proceedByFirstFit(size_t capacity, GuestIt guestsBegin,
     for (; guestsBegin != guestsEnd; ++guestsBegin) {
         const auto &guest = *guestsBegin;
 
-        auto hostIter = std::ranges::find_if(hosts, [&](const auto host) {
+        auto hostIter = std::ranges::find_if(hosts, [&](const auto &host) {
             return host->accommodatesGuest(*guest);
         });
         if (hostIter == hosts.end()) {
