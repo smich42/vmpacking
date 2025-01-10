@@ -112,9 +112,16 @@ makeIndividualGuestPartitions(GuestIt guestsBegin, GuestIt guestsEnd)
 
 inline bool guestsHaveSharedPage(const Guest &guest1, const Guest &guest2)
 {
-    return std::ranges::any_of(guest1.pages, [&](const auto &page1) {
-        return guest2.pages.contains(page1);
-    });
+    const auto &smaller = guest1.pages.size() < guest2.pages.size()
+                              ? guest1.pages
+                              : guest2.pages;
+    const auto &larger = guest1.pages.size() < guest2.pages.size()
+                             ? guest2.pages
+                             : guest1.pages;
+
+    return std::ranges::any_of(
+        smaller.begin(), smaller.end(),
+        [&](const auto &page) { return larger.contains(page); });
 }
 
 template <SharedPtrIterator<const Guest> GuestIt>
