@@ -90,8 +90,8 @@ makeOneGuestPartition(GuestIt guestsBegin, GuestIt guestsEnd)
 {
     // Whole-page decanting
     std::vector<std::shared_ptr<const Guest>> allGuests;
-    for (auto it = guestsBegin; it != guestsEnd; ++it) {
-        allGuests.push_back(*it);
+    for (; guestsBegin != guestsEnd; ++guestsBegin) {
+        allGuests.push_back(*guestsBegin);
     }
     return { allGuests };
 }
@@ -102,8 +102,8 @@ makeIndividualGuestPartitions(GuestIt guestsBegin, GuestIt guestsEnd)
 {
     // Per-guest decanting
     std::vector<std::vector<std::shared_ptr<const Guest>>> partition;
-    for (auto guestIt = guestsBegin; guestIt != guestsEnd; ++guestIt) {
-        partition.push_back(std::vector{ *guestIt });
+    for (; guestsBegin != guestsEnd; ++guestsBegin) {
+        partition.push_back(std::vector{ *guestsBegin });
     }
     return partition;
 }
@@ -136,12 +136,12 @@ makeShareGraphComponentGuestPartitions(GuestIt guestsBegin, GuestIt guestsEnd)
             }
         };
 
-    for (auto it = guestsBegin; it != guestsEnd; ++it) {
-        if (visited.contains(*it)) {
+    for (; guestsBegin != guestsEnd; ++guestsBegin) {
+        if (visited.contains(*guestsBegin)) {
             continue;
         }
         std::vector<std::shared_ptr<const Guest>> component;
-        dfs(it, component);
+        dfs(guestsBegin, component);
         result.push_back(std::move(component));
     }
 

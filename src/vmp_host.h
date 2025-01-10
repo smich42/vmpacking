@@ -40,8 +40,8 @@ class Host
                                               GuestIt guestsEnd) const
     {
         std::set<int> newPages;
-        for (auto it = guestsBegin; it != guestsEnd; ++it) {
-            for (const int page : (*it)->pages) {
+        for (; guestsBegin != guestsEnd; ++guestsBegin) {
+            for (const int page : (*guestsBegin)->pages) {
                 if (!pageFreq.contains(page)) {
                     newPages.insert(page);
                 }
@@ -57,8 +57,8 @@ class Host
                                               GuestProfitIt guestsEnd) const
     {
         std::set<int> newPages;
-        for (auto it = guestsBegin; it != guestsEnd; ++it) {
-            for (const int page : it->first->pages) {
+        for (; guestsBegin != guestsEnd; ++guestsBegin) {
+            for (const int page : guestsBegin->first->pages) {
                 if (!pageFreq.contains(page)) {
                     newPages.insert(page);
                 }
