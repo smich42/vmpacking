@@ -25,8 +25,28 @@ double calculateSizeRelRatio(const Guest &guest,
            calculateRelSize(guest, pageFreq);
 }
 
-double countGuestPagesPlaced(const Guest &guest,
-                             const std::vector<std::shared_ptr<Host>> &hosts)
+double
+calculateLocalityScore(const Guest &guest, const size_t hostIndex,
+                       const std::vector<std::shared_ptr<Host>> &allHosts)
+{
+    const size_t pagesOnHost = guest.countPagesOn(*allHosts[hostIndex]);
+
+    size_t minPlacedOnOtherHost = std::numeric_limits<size_t>::max();
+    for (int i = 0; i < allHosts.size(); ++i) {
+        if (i == hostIndex) {
+            continue;
+        }
+        minPlacedOnOtherHost =
+            std::min(minPlacedOnOtherHost, guest.countPagesOn(*allHosts[i]));
+    }
+
+    return static_cast<double>(pagesOnHost + minPlacedOnOtherHost) /
+           static_cast<double>(guest.pageCount());
+}
+
+double
+countGuestPagesPlaced(const Guest &guest,
+                      const std::vector<std::shared_ptr<const Host>> &hosts)
 {
     const auto frequencies =
         calculatePageFrequencies(hosts.begin(), hosts.end());

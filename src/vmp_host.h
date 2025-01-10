@@ -17,14 +17,14 @@ class Host
 
     [[nodiscard]] bool accommodatesGuest(const Guest &guest) const;
 
-    template <SharedPtrIterator<Guest> GuestIt>
+    template <SharedPtrIterator<const Guest> GuestIt>
     bool accommodatesGuests(GuestIt guestsBegin, GuestIt guestsEnd) const
     {
         return countPagesWithGuests(guestsBegin, guestsEnd) <= capacity;
     }
 
-    template <typename GuestProfitIt, typename K = std::shared_ptr<Guest>,
-              typename V = int>
+    template <typename GuestProfitIt,
+              typename K = std::shared_ptr<const Guest>, typename V = int>
         requires PairIterator<GuestProfitIt, K, V>
     bool accommodatesGuests(GuestProfitIt guestsBegin,
                             GuestProfitIt guestsEnd) const
@@ -35,7 +35,7 @@ class Host
     [[nodiscard]] size_t pageFrequency(int page) const;
     [[nodiscard]] size_t pageCount() const;
 
-    template <SharedPtrIterator<Guest> GuestIt>
+    template <SharedPtrIterator<const Guest> GuestIt>
     [[nodiscard]] size_t countPagesWithGuests(GuestIt guestsBegin,
                                               GuestIt guestsEnd) const
     {
@@ -50,8 +50,8 @@ class Host
         return newPages.size() + pageFreq.size();
     }
 
-    template <typename GuestProfitIt, typename K = std::shared_ptr<Guest>,
-              typename V = int>
+    template <typename GuestProfitIt,
+              typename K = std::shared_ptr<const Guest>, typename V = int>
         requires PairIterator<GuestProfitIt, K, V>
     [[nodiscard]] size_t countPagesWithGuests(GuestProfitIt guestsBegin,
                                               GuestProfitIt guestsEnd) const
@@ -71,14 +71,15 @@ class Host
 
     [[nodiscard]] size_t guestCount() const;
     [[nodiscard]] bool isOverfull() const;
-    [[nodiscard]] bool hasGuest(const std::shared_ptr<Guest> &guest) const;
+    [[nodiscard]] bool
+    hasGuest(const std::shared_ptr<const Guest> &guest) const;
 
-    bool addGuest(const std::shared_ptr<Guest> &guest);
-    bool removeGuest(const std::shared_ptr<Guest> &guest);
+    bool addGuest(const std::shared_ptr<const Guest> &guest);
+    bool removeGuest(const std::shared_ptr<const Guest> &guest);
     void clearGuests();
 
     const size_t capacity;
-    std::set<std::shared_ptr<Guest>> guests;
+    std::set<std::shared_ptr<const Guest>> guests;
 
   private:
     std::map<int, int> pageFreq;

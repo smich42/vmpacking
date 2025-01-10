@@ -8,7 +8,7 @@ Packing maximiseByLocalSearch(
     Host (*oneHostMaximiser)(GuestProfitVecIt, GuestProfitVecIt, size_t),
     const double oneHostApproxRatio, const double epsilon)
 {
-    std::vector initialPlacements(instance.guests.size(), false);
+    std::vector initialPlacements(instance.guestCount(), false);
 
     std::vector<std::shared_ptr<Host>> hosts;
     hosts.reserve(allowedHostCount);
@@ -16,7 +16,7 @@ Packing maximiseByLocalSearch(
     for (size_t i = 0; i < allowedHostCount; ++i) {
         const auto host = std::make_shared<Host>(instance.capacity);
 
-        for (size_t j = 0; j < instance.guests.size(); ++j) {
+        for (size_t j = 0; j < instance.guestCount(); ++j) {
             if (!initialPlacements[j] &&
                 host->accommodatesGuest(*instance.guests[j])) {
                 host->addGuest(instance.guests[j]);
@@ -39,7 +39,7 @@ Packing maximiseByLocalSearch(
         std::shared_ptr<Host> mostImprovingCandidate;
 
         for (size_t i = 0; i < hosts.size(); i++) {
-            std::vector<std::pair<std::shared_ptr<Guest>, int>>
+            std::vector<std::pair<std::shared_ptr<const Guest>, int>>
                 guestsWithValues;
 
             for (const auto &guest : instance.guests) {

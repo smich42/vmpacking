@@ -18,12 +18,14 @@ double calculateRelSize(const Guest &guest,
 double calculateSizeRelRatio(const Guest &guest,
                              const std::unordered_map<int, int> &pageFreq);
 
+double calculateLocalityScore(const Guest &guest);
+
 double countGuestPagesPlaced(const Guest &guest,
                              const std::vector<std::shared_ptr<Host>> &hosts);
 
-template <SharedPtrIterator<Guest> GuestIt>
+template <SharedPtrIterator<const Guest> GuestIt>
 void decantGuests(std::vector<std::shared_ptr<Host>> &hosts,
-                  std::vector<std::vector<std::shared_ptr<Guest>>> (
+                  std::vector<std::vector<std::shared_ptr<const Guest>>> (
                       *partitionGuests)(GuestIt, GuestIt))
 {
     for (auto leftIt = hosts.begin(); leftIt != hosts.end(); ++leftIt) {
@@ -54,7 +56,7 @@ void decantGuests(std::vector<std::shared_ptr<Host>> &hosts,
                   [](const auto &host) { return host->guestCount() == 0; });
 }
 
-template <SharedPtrIterator<Guest> GuestIt>
+template <SharedPtrIterator<const Guest> GuestIt>
 std::unordered_map<int, int> calculatePageFrequencies(GuestIt guestsBegin,
                                                       GuestIt guestsEnd)
 {
@@ -67,7 +69,7 @@ std::unordered_map<int, int> calculatePageFrequencies(GuestIt guestsBegin,
     return frequencies;
 }
 
-template <SharedPtrIterator<Host> HostIt>
+template <SharedPtrIterator<const Host> HostIt>
 std::unordered_map<int, int> calculatePageFrequencies(HostIt hostsBegin,
                                                       HostIt hostsEnd)
 {
@@ -82,24 +84,24 @@ std::unordered_map<int, int> calculatePageFrequencies(HostIt hostsBegin,
     return frequencies;
 }
 
-template <SharedPtrIterator<Guest> GuestIt>
-std::vector<std::vector<std::shared_ptr<Guest>>>
+template <SharedPtrIterator<const Guest> GuestIt>
+std::vector<std::vector<std::shared_ptr<const Guest>>>
 makeOneGuestPartition(GuestIt guestsBegin, GuestIt guestsEnd)
 {
     // Whole-page decanting
-    std::vector<std::shared_ptr<Guest>> allGuests;
+    std::vector<std::shared_ptr<const Guest>> allGuests;
     for (auto it = guestsBegin; it != guestsEnd; ++it) {
         allGuests.push_back(*it);
     }
     return { allGuests };
 }
 
-template <SharedPtrIterator<Guest> GuestIt>
-std::vector<std::vector<std::shared_ptr<Guest>>>
+template <SharedPtrIterator<const Guest> GuestIt>
+std::vector<std::vector<std::shared_ptr<const Guest>>>
 makeIndividualGuestPartitions(GuestIt guestsBegin, GuestIt guestsEnd)
 {
     // Per-guest decanting
-    std::vector<std::vector<std::shared_ptr<Guest>>> partition;
+    std::vector<std::vector<std::shared_ptr<const Guest>>> partition;
     for (auto guestIt = guestsBegin; guestIt != guestsEnd; ++guestIt) {
         partition.push_back(std::vector{ *guestIt });
     }
@@ -113,15 +115,16 @@ inline bool guestsHaveSharedPage(const Guest &guest1, const Guest &guest2)
     });
 }
 
-template <SharedPtrIterator<Guest> GuestIt>
-std::vector<std::vector<std::shared_ptr<Guest>>>
+template <SharedPtrIterator<const Guest> GuestIt>
+std::vector<std::vector<std::shared_ptr<const Guest>>>
 makeShareGraphComponentGuestPartitions(GuestIt guestsBegin, GuestIt guestsEnd)
 {
-    std::unordered_set<std::shared_ptr<Guest>> visited;
-    std::vector<std::vector<std::shared_ptr<Guest>>> result;
+    std::unordered_set<std::shared_ptr<const Guest>> visited;
+    std::vector<std::vector<std::shared_ptr<const Guest>>> result;
 
-    std::function<void(GuestIt, std::vector<std::shared_ptr<Guest>> &)> dfs =
-        [&](GuestIt cur, std::vector<std::shared_ptr<Guest>> &component) {
+    std::function<void(GuestIt, std::vector<std::shared_ptr<const Guest>> &)>
+        dfs = [&](GuestIt cur,
+                  std::vector<std::shared_ptr<const Guest>> &component) {
             visited.insert(*cur);
             component.push_back(*cur);
 
@@ -137,7 +140,7 @@ makeShareGraphComponentGuestPartitions(GuestIt guestsBegin, GuestIt guestsEnd)
         if (visited.contains(*it)) {
             continue;
         }
-        std::vector<std::shared_ptr<Guest>> component;
+        std::vector<std::shared_ptr<const Guest>> component;
         dfs(it, component);
         result.push_back(std::move(component));
     }

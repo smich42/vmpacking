@@ -18,21 +18,22 @@ namespace vmp
  * @param clusterSize the number of guests to place
  * @return the most efficient cluster of guests, or std::nullopt if no valid
  */
-static std::optional<std::vector<std::pair<std::shared_ptr<Guest>, int>>>
-findMaxValueCluster(const std::map<std::shared_ptr<Guest>, int> &unplaced,
-                    const Host &host, const int clusterSize)
+static std::optional<std::vector<std::pair<std::shared_ptr<const Guest>, int>>>
+findMaxValueCluster(
+    const std::map<std::shared_ptr<const Guest>, int> &unplaced,
+    const Host &host, const int clusterSize)
 {
     // TODO: parameterise the value function?
 
     std::vector<bool> selector(unplaced.size());
     std::fill(selector.end() - clusterSize, selector.end(), true);
 
-    std::optional<std::vector<std::pair<std::shared_ptr<Guest>, int>>>
+    std::optional<std::vector<std::pair<std::shared_ptr<const Guest>, int>>>
         bestCluster = std::nullopt;
     double bestClusterValue = 0.;
 
     do {
-        std::vector<std::pair<std::shared_ptr<Guest>, int>> candidateSet;
+        std::vector<std::pair<std::shared_ptr<const Guest>, int>> candidateSet;
 
         auto it = unplaced.begin();
         for (size_t i = 0; i < unplaced.size(); ++i, ++it) {
@@ -78,7 +79,7 @@ findMaxValueCluster(const std::map<std::shared_ptr<Guest>, int> &unplaced,
  * Defaults to 1.
  * @return a host with the most valuable guests placed
  */
-template <typename GuestProfitIt, typename K = std::shared_ptr<Guest>,
+template <typename GuestProfitIt, typename K = std::shared_ptr<const Guest>,
           typename V = int>
     requires PairIterator<GuestProfitIt, K, V>
 Host maximiseOneHostByClusterValues(GuestProfitIt guestsBegin,

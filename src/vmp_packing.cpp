@@ -5,7 +5,7 @@ namespace vmp
 {
 
 Packing::Packing(const std::vector<std::shared_ptr<Host>> &hosts)
-    : hosts(std::vector(hosts))
+    : hosts(hosts)
 {
 }
 
@@ -18,10 +18,16 @@ bool Packing::validate() const
 
 size_t Packing::countGuests() const
 {
-    return std::accumulate(hosts.begin(), hosts.end(), 0,
-                           [](const int sum, const auto &host) {
-                               return sum + host->guests.size();
-                           });
+    size_t count = 0;
+    for (const auto &host : hosts) {
+        count += host->guestCount();
+    }
+    return count;
+}
+
+size_t Packing::hostCount() const
+{
+    return hosts.size();
 }
 
 }  // namespace vmp

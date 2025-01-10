@@ -69,7 +69,7 @@ GeneralInstanceLoader::makeGeneralInstances() const
 
     std::vector<GeneralInstance> instances;
     for (int i = 0; i < capacityData.size(); i++) {
-        std::vector<std::shared_ptr<Guest>> guests;
+        std::vector<std::shared_ptr<const Guest>> guests;
         std::ranges::transform(
             guestData[i], std::back_inserter(guests), [](const auto &pages) {
                 return std::make_shared<Guest>(

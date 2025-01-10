@@ -19,6 +19,7 @@ class Packing
 
     [[nodiscard]] bool validate() const;
     [[nodiscard]] size_t countGuests() const;
+    [[nodiscard]] size_t hostCount() const;
 
     std::vector<std::shared_ptr<Host>> hosts;
 };

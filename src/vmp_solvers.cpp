@@ -1,6 +1,5 @@
 #include <vmp_solvers.h>
 
-#include <cassert>
 #include <numeric>
 #include <ostream>
 #include <vmp_solverutils.h>
@@ -11,15 +10,15 @@ namespace vmp
  * Packs `[guestsBegin, guestsEnd)` sequentially by Next Fit, modifying a
  * partial hosts vector
  *
- * @tparam GuestIt any iterator type over `std::shared_ptr<Guest>`
+ * @tparam GuestIt any iterator type over `std::shared_ptr<const Guest>`
  * @param capacity the fixed bin capacity
  * @param guestsBegin the start of guest range
  * @param guestsEnd the end of guest range
  * @param hosts the partial hosts vector to use
  */
-template <SharedPtrIterator<Guest> GuestIt>
+template <SharedPtrIterator<const Guest> GuestIt>
 static void proceedNextFit(size_t capacity, GuestIt guestsBegin,
-                           const GuestIt guestsEnd,
+                           GuestIt guestsEnd,
                            std::vector<std::shared_ptr<Host>> &hosts)
 {
     for (; guestsBegin != guestsEnd; ++guestsBegin) {
@@ -44,15 +43,15 @@ Packing solveByNextFit(const GeneralInstance &instance)
  * Packs `[guestsBegin, guestsEnd)` sequentially by First Fit, modifying a
  * partial hosts vector
  *
- * @tparam GuestIt any iterator type over `std::shared_ptr<Guest>`
+ * @tparam GuestIt any iterator type over `std::shared_ptr<const Guest>`
  * @param capacity the fixed bin capacity
  * @param guestsBegin the start of guest range
  * @param guestsEnd the end of guest range
  * @param hosts the partial hosts vector to use
  */
-template <SharedPtrIterator<Guest> GuestIt>
+template <SharedPtrIterator<const Guest> GuestIt>
 static void proceedFirstFit(size_t capacity, GuestIt guestsBegin,
-                            const GuestIt guestsEnd,
+                            GuestIt guestsEnd,
                             std::vector<std::shared_ptr<Host>> &hosts)
 {
     for (; guestsBegin != guestsEnd; ++guestsBegin) {
@@ -83,15 +82,15 @@ Packing solveByFirstFit(const GeneralInstance &instance)
  * Packs `[guestsBegin, guestsEnd)` sequentially by "Best Fusion" of Grange, et
  * al. (2021), modifying a partial hosts vector
  *
- * @tparam GuestIt any iterator type over `std::shared_ptr<Guest>`
+ * @tparam GuestIt any iterator type over `std::shared_ptr<const Guest>`
  * @param capacity the fixed bin capacity
  * @param guestsBegin the start of guest range
  * @param guestsEnd the end of guest range
  * @param hosts the partial hosts vector to use
  */
-template <SharedPtrIterator<Guest> GuestIt>
+template <SharedPtrIterator<const Guest> GuestIt>
 static void proceedBestFusion(size_t capacity, GuestIt guestsBegin,
-                              const GuestIt guestsEnd,
+                              GuestIt guestsEnd,
                               std::vector<std::shared_ptr<Host>> &hosts)
 {
     const auto frequencies = calculatePageFrequencies(guestsBegin, guestsEnd);
@@ -123,7 +122,7 @@ static void proceedBestFusion(size_t capacity, GuestIt guestsBegin,
     }
 
     // Use ordered set for deterministic behaviour
-    using SetGuestIt = std::set<std::shared_ptr<Guest>>::iterator;
+    using SetGuestIt = std::set<std::shared_ptr<const Guest>>::iterator;
     decantGuests<SetGuestIt>(hosts, makeOneGuestPartition<SetGuestIt>);
     decantGuests<SetGuestIt>(
         hosts, makeShareGraphComponentGuestPartitions<SetGuestIt>);
@@ -143,19 +142,19 @@ Packing solveByBestFusion(const GeneralInstance &instance)
  * Packs `[guestsBegin, guestsEnd)` sequentially by "Overload-and-Remove" of
  * Grange, et al. (2021), modifying a partial hosts vector
  *
- * @tparam GuestIt any iterator type over `std::shared_ptr<Guest>`
+ * @tparam GuestIt any iterator type over `std::shared_ptr<const Guest>`
  * @param capacity the fixed bin capacity
  * @param guestsBegin the start of guest range
  * @param guestsEnd the end of guest range
  * @param hosts the partial hosts vector to use
  */
-template <SharedPtrIterator<Guest> GuestIt>
+template <SharedPtrIterator<const Guest> GuestIt>
 static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
-                                     const GuestIt guestsEnd,
+                                     GuestIt guestsEnd,
                                      std::vector<std::shared_ptr<Host>> &hosts)
 {
-    std::deque<std::shared_ptr<Guest>> unplacedGuests;
-    std::map<std::shared_ptr<Guest>, std::set<std::shared_ptr<Host>>>
+    std::deque<std::shared_ptr<const Guest>> unplacedGuests;
+    std::map<std::shared_ptr<const Guest>, std::set<std::shared_ptr<Host>>>
         attemptedPlacements;
     const auto frequencies = calculatePageFrequencies(guestsBegin, guestsEnd);
 
@@ -217,7 +216,7 @@ static void proceedOverloadAndRemove(size_t capacity, GuestIt guestsBegin,
     proceedFirstFit(capacity, unplacedGuests.begin(), unplacedGuests.end(),
                     hosts);
 
-    using SetGuestIt = std::set<std::shared_ptr<Guest>>::iterator;
+    using SetGuestIt = std::set<std::shared_ptr<const Guest>>::iterator;
     decantGuests<SetGuestIt>(hosts, makeOneGuestPartition<SetGuestIt>);
     decantGuests<SetGuestIt>(
         hosts, makeShareGraphComponentGuestPartitions<SetGuestIt>);
@@ -233,17 +232,14 @@ Packing solveByOverloadAndRemove(const GeneralInstance &instance)
     return Packing(hosts);
 }
 
-Packing solveByLocalityScore(const GeneralInstance &instance)
-{
-
-}
+Packing solveByLocalityScore(const GeneralInstance &instance) {}
 
 Packing solveByMaximiser(const GeneralInstance &instance,
                          Packing (*maximiser)(const GeneralInstance &instance,
                                               size_t maxHosts))
 {
     size_t minHosts = 0;
-    size_t maxHosts = instance.guests.size() + 1;
+    size_t maxHosts = instance.guestCount() + 1;
 
     std::shared_ptr<Packing> bestPacking;
 
@@ -251,7 +247,7 @@ Packing solveByMaximiser(const GeneralInstance &instance,
         const size_t allowedHostCount = (minHosts + maxHosts) / 2;
         auto packingCandidate = maximiser(instance, allowedHostCount);
 
-        if (packingCandidate.countGuests() == instance.guests.size()) {
+        if (packingCandidate.countGuests() == instance.guestCount()) {
             bestPacking =
                 std::make_shared<Packing>(std::move(packingCandidate));
             maxHosts = allowedHostCount - 1;
