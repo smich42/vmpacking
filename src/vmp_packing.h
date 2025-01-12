@@ -17,11 +17,23 @@ class Packing
 
     Packing &operator=(Packing &&other) noexcept = default;
 
-    [[nodiscard]] bool validateForInstance(const GeneralInstance &instance) const;
+    /**
+     * Validate the packing against an instance, by checking that:
+     * - All guests are present,
+     * - No host is overfull; and
+     * - No host is empty
+     *
+     * @param instance the instance against which to validate
+     * @return
+     */
+    [[nodiscard]] bool
+    validateForInstance(const GeneralInstance &instance) const;
+
     [[nodiscard]] size_t countGuests() const;
     [[nodiscard]] size_t hostCount() const;
 
     std::vector<std::shared_ptr<Host>> hosts;
 };
+
 }  // namespace vmp
 #endif  // SOLVERS_PACKING_H

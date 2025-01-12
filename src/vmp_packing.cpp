@@ -24,12 +24,10 @@ bool Packing::validateForInstance(const GeneralInstance &instance) const
             placedGuests.insert(guest);
         }
     }
-    for (const auto &guest : instance.guests) {
-        if (!placedGuests.contains(guest)) {
-            return false;
-        }
-    }
-    return true;
+
+    return std::ranges::all_of(
+        instance.guests.begin(), instance.guests.end(),
+        [&](const auto &guest) { return placedGuests.contains(guest); });
 }
 
 size_t Packing::countGuests() const

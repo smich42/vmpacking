@@ -77,6 +77,8 @@ findMaxValueCluster(
  * based on the reward and page sharing. See Li, et al. (2009) and Rampersaud &
  * Grosu (2014).
  *
+ * @tparam GuestProfitIt any iterator type over
+ * `std::pair<std::shared_ptr<const Guest, int>>`
  * @param guestsBegin the start of the guest range
  * @param guestsEnd the end of the guest range
  * @param capacity the fixed host capacity

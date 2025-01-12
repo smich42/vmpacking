@@ -7,6 +7,7 @@
 
 namespace vmp
 {
+
 template <typename It, typename T>
 concept SharedPtrIterator =
     std::input_iterator<It> &&

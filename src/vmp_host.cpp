@@ -11,7 +11,7 @@ Host::Host(const size_t capacity) : capacity(capacity) {}
 bool Host::addGuest(const std::shared_ptr<const Guest> &guest)
 {
     for (const int page : guest->pages) {
-        ++pageFreq[page];
+        ++pageFrequencies[page];
     }
     guests.insert(guest);
 
@@ -21,8 +21,8 @@ bool Host::addGuest(const std::shared_ptr<const Guest> &guest)
 bool Host::removeGuest(const std::shared_ptr<const Guest> &guest)
 {
     for (const int page : guest->pages) {
-        if (--pageFreq[page] == 0) {
-            pageFreq.erase(page);
+        if (--pageFrequencies[page] == 0) {
+            pageFrequencies.erase(page);
         }
     }
     // Erase the entry to avoid maintaining an unnecessary reference
@@ -34,7 +34,7 @@ bool Host::removeGuest(const std::shared_ptr<const Guest> &guest)
 void Host::clearGuests()
 {
     guests.clear();
-    pageFreq.clear();
+    pageFrequencies.clear();
 }
 
 bool Host::accommodatesGuest(const Guest &guest) const
@@ -44,22 +44,22 @@ bool Host::accommodatesGuest(const Guest &guest) const
 
 size_t Host::pageFrequency(const int page) const
 {
-    return pageFreq.contains(page) ? pageFreq.at(page) : 0;
+    return pageFrequencies.contains(page) ? pageFrequencies.at(page) : 0;
 }
 
-size_t Host::pageCount() const
+size_t Host::uniquePageCount() const
 {
-    return pageFreq.size();
+    return pageFrequencies.size();
 }
 
 size_t Host::countPagesWithGuest(const Guest &guest) const
 {
-    return pageCount() + guest.pageCount() - guest.countPagesOn(*this);
+    return uniquePageCount() + guest.pageCount() - guest.countPagesOn(*this);
 }
 
 size_t Host::countPagesNotOn(const Guest &guest) const
 {
-    return pageCount() - guest.countPagesOn(*this);
+    return uniquePageCount() - guest.countPagesOn(*this);
 }
 
 size_t Host::guestCount() const
@@ -69,7 +69,7 @@ size_t Host::guestCount() const
 
 bool Host::isOverfull() const
 {
-    return pageFreq.size() > capacity;
+    return pageFrequencies.size() > capacity;
 }
 
 bool Host::hasGuest(const std::shared_ptr<const Guest> &guest) const

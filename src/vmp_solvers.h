@@ -4,7 +4,6 @@
 #include <vmp_clustertreeinstance.h>
 #include <vmp_generalinstance.h>
 #include <vmp_packing.h>
-#include <vmp_treeinstance.h>
 
 namespace vmp
 {
@@ -62,7 +61,7 @@ Packing solveByMaximiser(const GeneralInstance &instance,
                          Packing (*maximiser)(const GeneralInstance &instance,
                                               size_t allowedHostCount));
 
-Packing solveTree(const TreeInstance &instance);
+Packing solveSimpleTree(const ClusterTreeInstance &instance);
 
 Packing solveClusterTree(const ClusterTreeInstance &instance);
 
