@@ -64,8 +64,7 @@ class Host
      * @return
      */
     template <SharedPtrIterator<const Guest> GuestIt>
-    [[nodiscard]] size_t countPagesWithGuests(GuestIt guestsBegin,
-                                              GuestIt guestsEnd) const
+    [[nodiscard]] size_t countPagesWithGuests(GuestIt guestsBegin, GuestIt guestsEnd) const
     {
         std::set<int> newPages;
         for (; guestsBegin != guestsEnd; ++guestsBegin) {
@@ -94,8 +93,7 @@ class Host
     [[nodiscard]] size_t uniquePageCount() const;
     [[nodiscard]] size_t guestCount() const;
     [[nodiscard]] bool isOverfull() const;
-    [[nodiscard]] bool
-    hasGuest(const std::shared_ptr<const Guest> &guest) const;
+    [[nodiscard]] bool hasGuest(const std::shared_ptr<const Guest> &guest) const;
 
     bool addGuest(const std::shared_ptr<const Guest> &guest);
     bool removeGuest(const std::shared_ptr<const Guest> &guest);

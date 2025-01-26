@@ -12,8 +12,7 @@ class GeneralInstanceLoader
   public:
     explicit GeneralInstanceLoader(std::string directory);
 
-    void load(int max_instances = -1,
-              const std::string &capacity_field_name = "capacity",
+    void load(int max_instances = -1, const std::string &capacity_field_name = "capacity",
               const std::string &guests_field_name = "guests");
     [[nodiscard]] std::vector<GeneralInstance> makeGeneralInstances() const;
 

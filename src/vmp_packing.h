@@ -26,8 +26,7 @@ class Packing
      * @param instance the instance against which to validate
      * @return
      */
-    [[nodiscard]] bool
-    validateForInstance(const GeneralInstance &instance) const;
+    [[nodiscard]] bool validateForInstance(const GeneralInstance &instance) const;
 
     [[nodiscard]] size_t countGuests() const;
     [[nodiscard]] size_t hostCount() const;

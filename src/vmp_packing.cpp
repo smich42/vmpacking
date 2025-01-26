@@ -5,10 +5,7 @@
 namespace vmp
 {
 
-Packing::Packing(const std::vector<std::shared_ptr<Host>> &hosts)
-    : hosts(hosts)
-{
-}
+Packing::Packing(const std::vector<std::shared_ptr<Host>> &hosts) : hosts(hosts) {}
 
 bool Packing::validateForInstance(const GeneralInstance &instance) const
 {
@@ -25,9 +22,8 @@ bool Packing::validateForInstance(const GeneralInstance &instance) const
         }
     }
 
-    return std::ranges::all_of(
-        instance.guests.begin(), instance.guests.end(),
-        [&](const auto &guest) { return placedGuests.contains(guest); });
+    return std::ranges::all_of(instance.guests.begin(), instance.guests.end(),
+                               [&](const auto &guest) { return placedGuests.contains(guest); });
 }
 
 size_t Packing::countGuests() const

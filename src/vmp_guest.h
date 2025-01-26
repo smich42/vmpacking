@@ -16,6 +16,8 @@ class Guest
     [[nodiscard]] size_t countPagesOn(const Host &host) const;
 
     const std::set<int> pages;
+
+    friend std::ostream &operator<<(std::ostream &os, const Guest &instance);
 };
 
 }  // namespace vmp

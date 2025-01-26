@@ -301,4 +301,18 @@ Packing solveByMaximiser(const GeneralInstance &instance,
     return *bestPacking;
 }
 
+Packing solveClusterTree(const ClusterTreeInstance &instance) {}
+
+Packing solveSimpleTree(const ClusterTreeInstance &instance)
+{
+    const auto &leaves = instance.leafNodes();
+    std::vector hosts(leaves.size(),
+                      std::make_shared<Host>(instance.capacity));
+
+    int capacity = instance.capacity;
+
+    for (const size_t leaf : leaves) {
+    }
+}
+
 }  // namespace vmp
