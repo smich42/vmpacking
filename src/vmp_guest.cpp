@@ -9,14 +9,14 @@ namespace vmp
 
 Guest::Guest(const std::set<int> &pages) : pages(pages) {}
 
-size_t Guest::pageCount() const
+size_t Guest::getPageCount() const
 {
     return pages.size();
 }
 
 size_t Guest::countPagesOn(const Host &host) const
 {
-    return std::ranges::count_if(pages, [&](const int page) { return host.pageFrequency(page); });
+    return std::ranges::count_if(pages, [&](const int page) { return host.getPageFrequency(page); });
 }
 
 std::ostream &operator<<(std::ostream &os, const Guest &instance)
@@ -29,7 +29,7 @@ std::ostream &operator<<(std::ostream &os, const Guest &instance)
             os << ", " << *it;
         }
     }
-    os << "] (len: " << instance.pageCount() << ") }";
+    os << "] (len: " << instance.getPageCount() << ") }";
     return os;
 }
 

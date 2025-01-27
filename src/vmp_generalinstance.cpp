@@ -11,20 +11,30 @@ GeneralInstance::GeneralInstance(const size_t capacity,
 {
 }
 
-size_t GeneralInstance::guestCount() const
+size_t GeneralInstance::getGuestCount() const
 {
     return guests.size();
 }
 
+const std::vector<std::shared_ptr<const Guest>> &GeneralInstance::getGuests() const
+{
+    return guests;
+}
+
+size_t GeneralInstance::getCapacity() const
+{
+    return capacity;
+}
+
 std::ostream &operator<<(std::ostream &os, const GeneralInstance &instance)
 {
-    os << "Instance{ capacity=" << instance.capacity << ", guests=[";
-    for (size_t i = 0; i < instance.guestCount(); ++i) {
+    os << "Instance{ capacity=" << instance.getCapacity() << ", guests=[";
+    for (size_t i = 0; i < instance.getGuests().size(); ++i) {
         if (i > 0) {
             os << ", ";
         }
         os << "{";
-        const auto &pages = instance.guests[i]->pages;
+        const auto &pages = instance.getGuests()[i]->pages;
         for (auto it = pages.begin(); it != pages.end(); ++it) {
             if (it != pages.begin()) {
                 os << ",";

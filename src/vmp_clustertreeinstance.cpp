@@ -64,52 +64,67 @@ size_t ClusterTreeInstance::createCluster(const size_t parent)
     return newCluster;
 }
 
-size_t ClusterTreeInstance::rootCluster()
+size_t ClusterTreeInstance::getRootCluster()
 {
     return ROOT_CLUSTER;
 }
 
-const std::vector<size_t> &ClusterTreeInstance::clusterNodes(const size_t cluster) const
+std::vector<std::shared_ptr<const Guest>> ClusterTreeInstance::getGuests() const
+{
+    std::vector<std::shared_ptr<const Guest>> guests;
+    guests.reserve(leaves.size());
+    for (const auto &leaf : leaves) {
+        guests.emplace_back(getNodeGuest(leaf));
+    }
+    return guests;
+}
+
+size_t ClusterTreeInstance::getCapacity() const
+{
+    return capacity;
+}
+
+const std::vector<size_t> &ClusterTreeInstance::getClusterNodes(const size_t cluster) const
 {
     return clusters[cluster].nodes;
 }
 
-const std::vector<size_t> &ClusterTreeInstance::clusterChildren(const size_t cluster) const
+const std::vector<size_t> &ClusterTreeInstance::getClusterChildren(const size_t cluster) const
 {
     return clusters[cluster].children;
 }
 
-size_t ClusterTreeInstance::clusterParent(const size_t cluster) const
+size_t ClusterTreeInstance::getClusterParent(const size_t cluster) const
 {
     return clusters[cluster].parent;
 }
 
-const std::vector<size_t> &ClusterTreeInstance::nodeParents(const size_t node) const
+const std::vector<size_t> &ClusterTreeInstance::getNodeParents(const size_t node) const
 {
     return nodes[node].parents;
 }
 
-const std::vector<size_t> &ClusterTreeInstance::nodeChildren(const size_t node) const
+const std::vector<size_t> &ClusterTreeInstance::getNodeChildren(const size_t node) const
 {
     return nodes[node].children;
 }
 
-const std::vector<size_t> &ClusterTreeInstance::leafNodes() const
+const std::vector<size_t> &ClusterTreeInstance::getLeafNodes() const
 {
     return this->leaves;
 }
 
-size_t ClusterTreeInstance::clusterCount() const
+size_t ClusterTreeInstance::getClusterCount() const
 {
     return this->clusters.size();
 }
 
-const std::set<int> &ClusterTreeInstance::nodePages(const size_t node) const
+const std::set<int> &ClusterTreeInstance::getNodePages(const size_t node) const
 {
     return nodes[node].pages;
 }
 
-const std::shared_ptr<const Guest> &ClusterTreeInstance::nodeGuest(const size_t node) const
+const std::shared_ptr<const Guest> &ClusterTreeInstance::getNodeGuest(const size_t node) const
 {
     return nodes[node].guest;
 }
@@ -124,7 +139,7 @@ bool ClusterTreeInstance::clusterIsLeaf(const size_t cluster) const
     return clusters[cluster].children.empty();
 }
 
-size_t ClusterTreeInstance::nodeCount() const
+size_t ClusterTreeInstance::getNodeCount() const
 {
     return nodes.size();
 }

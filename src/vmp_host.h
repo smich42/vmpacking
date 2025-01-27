@@ -1,7 +1,7 @@
 #ifndef SOLVERS_HOST_H
 #define SOLVERS_HOST_H
 
-#include <vmp_iterators.h>
+#include <vmp_types.h>
 
 #include <map>
 #include <set>
@@ -83,15 +83,15 @@ class Host
      * @param page the page
      * @return the number of guests
      */
-    [[nodiscard]] size_t pageFrequency(int page) const;
+    [[nodiscard]] size_t getPageFrequency(int page) const;
 
     /**
      * The number of *unique* pages on this host
      *
      * @return the number of *unique* pages on this host
      */
-    [[nodiscard]] size_t uniquePageCount() const;
-    [[nodiscard]] size_t guestCount() const;
+    [[nodiscard]] size_t getUniquePageCount() const;
+    [[nodiscard]] size_t getGuestCount() const;
     [[nodiscard]] bool isOverfull() const;
     [[nodiscard]] bool hasGuest(const std::shared_ptr<const Guest> &guest) const;
 
@@ -99,13 +99,16 @@ class Host
     bool removeGuest(const std::shared_ptr<const Guest> &guest);
     void clearGuests();
 
-    const size_t capacity;
-    std::set<std::shared_ptr<const Guest>> guests;
+    [[nodiscard]] size_t getCapacity() const;
+    [[nodiscard]] const std::set<std::shared_ptr<const Guest>> &getGuests() const;
 
   private:
     // Store page frequencies as the number of guests that have a page is
     // useful some Grange heuristics
     std::map<int, int> pageFrequencies;
+
+    const size_t capacity;
+    std::set<std::shared_ptr<const Guest>> guests;
 };
 
 }  // namespace vmp

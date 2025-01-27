@@ -12,10 +12,14 @@ class GeneralInstance
   public:
     GeneralInstance(size_t capacity, const std::vector<std::shared_ptr<const Guest>> &guests);
 
-    [[nodiscard]] size_t guestCount() const;
+    [[nodiscard]] size_t getGuestCount() const;
 
     friend std::ostream &operator<<(std::ostream &os, const GeneralInstance &instance);
 
+    [[nodiscard]] const std::vector<std::shared_ptr<const Guest>> &getGuests() const;
+    [[nodiscard]] size_t getCapacity() const;
+
+  private:
     const size_t capacity;
     const std::vector<std::shared_ptr<const Guest>> guests;
 };

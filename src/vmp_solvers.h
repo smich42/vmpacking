@@ -57,9 +57,34 @@ Packing solveByLocalityScore(const GeneralInstance &instance);
  * @param instance the instance to solve
  * @return a valid packing
  */
-Packing solveByMaximiser(const GeneralInstance &instance,
-                         Packing (*maximiser)(const GeneralInstance &instance,
-                                              size_t allowedHostCount));
+template <typename InstanceType>
+    requires Instance<InstanceType>
+Packing solveByMaximiser(const InstanceType &instance,
+                         Packing (*maximiser)(const InstanceType &instance, size_t maxHosts))
+{
+    size_t minHosts = 0;
+    size_t maxHosts = instance.getGuests().size() + 1;
+
+    std::shared_ptr<Packing> bestPacking;
+
+    while (minHosts <= maxHosts) {
+        const size_t allowedHostCount = (minHosts + maxHosts) / 2;
+        Packing candidate = maximiser(instance, allowedHostCount);
+
+        if (candidate.countGuests() == instance.getGuests().size()) {
+            bestPacking = std::make_shared<Packing>(std::move(candidate));
+            maxHosts = allowedHostCount - 1;
+        }
+        else {  // Not all guests could be packed
+            minHosts = allowedHostCount + 1;
+        }
+    }
+
+    if (bestPacking == nullptr) {
+        throw std::runtime_error("No valid packing found; is a guest larger than the capacity?");
+    }
+    return *bestPacking;
+}
 
 Packing solveSimpleTree(const ClusterTreeInstance &instance);
 

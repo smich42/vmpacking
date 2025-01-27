@@ -4,6 +4,8 @@
 #include <vmp_generalinstance.h>
 #include <vmp_host.h>
 
+#include <unordered_set>
+
 namespace vmp
 {
 
@@ -26,10 +28,30 @@ class Packing
      * @param instance the instance against which to validate
      * @return
      */
-    [[nodiscard]] bool validateForInstance(const GeneralInstance &instance) const;
+    template <typename InstanceType>
+        requires Instance<InstanceType>
+    bool validateForInstance(const InstanceType &instance) const
+    {
+        std::unordered_set<std::shared_ptr<const Guest>> placedGuests;
+        for (const auto &host : hosts) {
+            if (host->getGuests().empty()) {
+                return false;
+            }
+            if (host->isOverfull()) {
+                return false;
+            }
+            for (const auto &guest : host->getGuests()) {
+                placedGuests.insert(guest);
+            }
+        }
+
+        const auto guests = instance.getGuests();
+        return std::ranges::all_of(guests.begin(), guests.end(),
+                                   [&](const auto &guest) { return placedGuests.contains(guest); });
+    }
 
     [[nodiscard]] size_t countGuests() const;
-    [[nodiscard]] size_t hostCount() const;
+    [[nodiscard]] size_t getHostCount() const;
 
     std::vector<std::shared_ptr<Host>> hosts;
 };

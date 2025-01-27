@@ -5,8 +5,10 @@
 #include <vmp_packing.h>
 #include <vmp_solvers.h>
 
-void runSolver(vmp::Packing (*solver)(const vmp::GeneralInstance &), const std::string &name,
-               const vmp::GeneralInstance &instance)
+template <typename InstanceType>
+    requires vmp::Instance<InstanceType>
+void runSolver(vmp::Packing (*solver)(const InstanceType &), const std::string &name,
+               const InstanceType &instance)
 {
     const auto start = std::chrono::high_resolution_clock::now();
     const auto packing = solver(instance);
@@ -19,22 +21,23 @@ void runSolver(vmp::Packing (*solver)(const vmp::GeneralInstance &), const std::
 
     std::cout << "=== " << name << " ===" << std::endl;
     std::cout << "Elapsed: " << elapsed << " s\n";
-    std::cout << "Result: " << packing.hostCount() << ", "
+    std::cout << "Result: " << packing.getHostCount() << ", "
               << (packing.validateForInstance(instance) ? "valid" : "invalid") << std::endl;
 }
 
-void runSingleHostMaximiser(vmp::Host (*maximiser)(vmp::GuestProfitVecIt, vmp::GuestProfitVecIt,
-                                                   size_t),
-                            const std::string &name, const vmp::GeneralInstance &instance)
+template <typename InstanceType>
+    requires vmp::Instance<InstanceType>
+void runSingleHostMaximiser(vmp::Host (*maximiser)(const InstanceType &instance),
+                            const std::string &name, const InstanceType &instance)
 {
     std::vector<std::pair<std::shared_ptr<const vmp::Guest>, int>> guests;
-    guests.reserve(instance.guestCount());
-    for (const auto &guest : instance.guests) {
+    guests.reserve(instance.getGuestCount());
+    for (const auto &guest : instance.getGuests()) {
         guests.emplace_back(guest, 1);
     }
 
     const auto start = std::chrono::high_resolution_clock::now();
-    const auto host = maximiser(guests.begin(), guests.end(), instance.capacity);
+    const auto host = maximiser(instance);
 
     const auto end = std::chrono::high_resolution_clock::now();
 
@@ -45,7 +48,7 @@ void runSingleHostMaximiser(vmp::Host (*maximiser)(vmp::GuestProfitVecIt, vmp::G
 
     std::cout << "=== " << name << " ===" << std::endl;
     std::cout << "Elapsed: " << elapsed << " s\n";
-    std::cout << "Result: " << host.guestCount() << " guests on host, "
+    std::cout << "Result: " << host.getGuestCount() << " guests on host, "
               << (!host.isOverfull() ? "valid" : "INVALID") << std::endl;
 }
 
@@ -53,7 +56,7 @@ void runClusterTree()
 {
     vmp::ClusterTreeInstance instance(11);
 
-    const size_t rootCluster = vmp::ClusterTreeInstance::rootCluster();
+    const size_t rootCluster = vmp::ClusterTreeInstance::getRootCluster();
     const size_t clusterA = instance.createCluster(rootCluster);
     const size_t clusterB = instance.createCluster(rootCluster);
     const size_t nodeR1 = instance.addInner(rootCluster, {}, { 1, 2 });
@@ -70,20 +73,35 @@ void runClusterTree()
     const size_t leaf3 = instance.addLeaf({ nodeB }, guest3, std::set{ 9, 10 });
     const size_t leaf4 = instance.addLeaf({ nodeB }, guest4, std::set{ 11, 12 });
 
-    const vmp::Host host = maximiseOneHostByClusterTree(instance);
+    const vmp::Host host = maximiseOneHostByClusterTree(
+        instance, { { guest1, 1 }, { guest2, 1 }, { guest3, 1 }, { guest4, 1 } });
 
-    std::cout << "Pages used: " << host.uniquePageCount() << std::endl;
+    std::cout << "Pages used: " << host.getUniquePageCount() << std::endl;
     std::cout << "Selected guests:" << std::endl;
-    for (const auto &guest : host.guests) {
+    for (const auto &guest : host.getGuests()) {
         std::cout << guest << std::endl;
     }
+
+    constexpr double oneHostApprox = 25;  // Throwaway, base it on clusterSize
+    constexpr double epsilon = 0.0001;    // Throwaway, base it on oneHostApprox
+
+    runSolver<vmp::ClusterTreeInstance>(
+        [](const vmp::ClusterTreeInstance &inst) {
+            return solveByMaximiser<vmp::ClusterTreeInstance>(
+                inst, [](const auto &inst, const size_t hostCount) {
+                    return maximiseByLocalSearch<vmp::ClusterTreeInstance>(
+                        inst, hostCount,
+                        [](const auto &inst, const auto &profits) {
+                            return vmp::maximiseOneHostByClusterTree(inst, profits);
+                        },
+                        oneHostApprox, epsilon);
+                });
+        },
+        "Local Search on Cluster Tree Maximiser", instance);
 }
 
 int main()
 {
-    runClusterTree();
-    return 0;
-
     vmp::GeneralInstanceLoader loader("../resource/gauss");
     loader.load(1, "capacity", "tiles");
 
@@ -97,29 +115,36 @@ int main()
     runSolver(vmp::solveByOverloadAndRemove, "Overload and Remove", instance);
     runSolver(vmp::solveByLocalityScore, "Locality Score", instance);
 
-    runSingleHostMaximiser(
-        [](vmp::GuestProfitVecIt guestsBegin, vmp::GuestProfitVecIt guestsEnd,
-           const size_t capacity) {
-            return maximiseOneHostByClusterValues(guestsBegin, guestsEnd, capacity, 1);
+    runSingleHostMaximiser<vmp::GeneralInstance>(
+        [](const vmp::GeneralInstance &inst) {
+            std::map<std::shared_ptr<const vmp::Guest>, int> profits;
+            for (const auto &guest : inst.getGuests()) {
+                profits[guest] = 1;
+            }
+            return maximiseOneHostBySubsetValues(inst, profits, 1);
         },
         "GSAVVM", instance);
 
-    constexpr int clusterSize = 1;
+    constexpr int initialSubsetSize = 1;
     constexpr double oneHostApprox = 25;  // Throwaway, base it on clusterSize
     constexpr double epsilon = 0.0001;    // Throwaway, base it on oneHostApprox
 
     // Compose one host maximiser -> local search maximiser -> solver
-    runSolver(
-        [](const auto &inst) {
-            return solveByMaximiser(inst, [](const auto &inst, const size_t hostCount) {
-                return maximiseByLocalSearch(
-                    inst, hostCount,
-                    [](const auto beg, const auto end, const size_t cap) {
-                        return maximiseOneHostByClusterValues(beg, end, cap, clusterSize);
-                    },
-                    oneHostApprox, epsilon);
-            });
+    runSolver<vmp::GeneralInstance>(
+        [](const vmp::GeneralInstance &inst) {
+            return solveByMaximiser<vmp::GeneralInstance>(
+                inst, [](const auto &inst, const size_t hostCount) {
+                    return maximiseByLocalSearch<vmp::GeneralInstance>(
+                        inst, hostCount,
+                        [](const auto &inst, const auto &profits) {
+                            return maximiseOneHostBySubsetValues(inst, profits, initialSubsetSize);
+                        },
+                        oneHostApprox, epsilon);
+                });
         },
-        "Local Search", instance);
+        "Local Search on Subset Value Maximiser", instance);
+
+    runClusterTree();
+
     return 0;
 }

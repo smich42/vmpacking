@@ -18,7 +18,7 @@ double calculateRelSize(const Guest &guest, const std::unordered_map<int, int> &
 
 double calculateSizeRelRatio(const Guest &guest, const std::unordered_map<int, int> &pageFreq)
 {
-    return static_cast<double>(guest.pageCount()) / calculateRelSize(guest, pageFreq);
+    return static_cast<double>(guest.getPageCount()) / calculateRelSize(guest, pageFreq);
 }
 
 double calculateLocalityScore(const Guest &guest, const std::shared_ptr<Host> &host,
@@ -35,7 +35,7 @@ double calculateLocalityScore(const Guest &guest, const std::shared_ptr<Host> &h
     }
 
     return static_cast<double>(pagesOnHost + minDifferenceWithOtherHost) /
-           std::sqrt(guest.pageCount());
+           std::sqrt(guest.getPageCount());
 }
 
 double countGuestPagesPlaced(const Guest &guest,

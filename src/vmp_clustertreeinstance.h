@@ -1,8 +1,9 @@
 #ifndef VMP_CLUSTERTREEINSTANCE_H
 #define VMP_CLUSTERTREEINSTANCE_H
 
-#include <vector>
 #include <vmp_guest.h>
+
+#include <vector>
 
 namespace vmp
 {
@@ -10,30 +11,31 @@ namespace vmp
 class ClusterTreeInstance
 {
   public:
-    const size_t capacity;
-
     size_t addInner(size_t cluster, const std::vector<size_t> &parents, const std::set<int> &pages);
     size_t addLeaf(const std::vector<size_t> &parents, const std::shared_ptr<const Guest> &guest,
                    const std::set<int> &pages);
 
     size_t createCluster(size_t parent);
 
-    [[nodiscard]] const std::vector<size_t> &clusterNodes(size_t cluster) const;
-    [[nodiscard]] const std::vector<size_t> &clusterChildren(size_t cluster) const;
-    [[nodiscard]] size_t clusterParent(size_t cluster) const;
+    [[nodiscard]] const std::vector<size_t> &getClusterNodes(size_t cluster) const;
+    [[nodiscard]] const std::vector<size_t> &getClusterChildren(size_t cluster) const;
+    [[nodiscard]] size_t getClusterParent(size_t cluster) const;
     [[nodiscard]] bool clusterIsLeaf(size_t cluster) const;
 
-    [[nodiscard]] const std::vector<size_t> &nodeParents(size_t node) const;
-    [[nodiscard]] const std::vector<size_t> &nodeChildren(size_t node) const;
-    [[nodiscard]] const std::set<int> &nodePages(size_t node) const;
-    [[nodiscard]] const std::shared_ptr<const Guest> &nodeGuest(size_t node) const;
+    [[nodiscard]] const std::vector<size_t> &getNodeParents(size_t node) const;
+    [[nodiscard]] const std::vector<size_t> &getNodeChildren(size_t node) const;
+    [[nodiscard]] const std::set<int> &getNodePages(size_t node) const;
+    [[nodiscard]] const std::shared_ptr<const Guest> &getNodeGuest(size_t node) const;
     [[nodiscard]] bool nodeIsLeaf(size_t node) const;
-    [[nodiscard]] size_t nodeCount() const;
+    [[nodiscard]] size_t getNodeCount() const;
     [[nodiscard]] size_t nodeCountOf(size_t cluster) const;
 
-    [[nodiscard]] const std::vector<size_t> &leafNodes() const;
-    [[nodiscard]] size_t clusterCount() const;
-    [[nodiscard]] static size_t rootCluster();
+    [[nodiscard]] const std::vector<size_t> &getLeafNodes() const;
+    [[nodiscard]] size_t getClusterCount() const;
+    [[nodiscard]] static size_t getRootCluster();
+
+    [[nodiscard]] std::vector<std::shared_ptr<const Guest>> getGuests() const;
+    [[nodiscard]] size_t getCapacity() const;
 
     explicit ClusterTreeInstance(size_t capacity);
 
@@ -79,6 +81,8 @@ class ClusterTreeInstance
     std::vector<Node> nodes;
     std::vector<size_t> leaves;
     std::vector<Cluster> clusters;
+
+    const size_t capacity;
 };
 
 }  // namespace vmp

@@ -7,7 +7,7 @@
 #include <unordered_set>
 #include <vmp_guest.h>
 #include <vmp_host.h>
-#include <vmp_iterators.h>
+#include <vmp_types.h>
 
 namespace vmp
 {
@@ -31,8 +31,9 @@ void decantGuests(
 
         for (auto rightIt = leftIt + 1; rightIt != hosts.end(); ++rightIt) {
             const auto &rightHost = *rightIt;
-            const auto partitions =
-                partitionGuests(rightHost->guests.begin(), rightHost->guests.end());
+            const auto rightGuests = rightHost->getGuests();
+
+            const auto partitions = partitionGuests(rightGuests.begin(), rightGuests.end());
 
             for (const auto &partition : partitions) {
                 if (!leftHost->accommodatesGuests(partition.begin(), partition.end())) {
@@ -46,7 +47,7 @@ void decantGuests(
             }
         }
     }
-    std::erase_if(hosts, [](const auto &host) { return host->guestCount() == 0; });
+    std::erase_if(hosts, [](const auto &host) { return host->getGuests().empty(); });
 }
 
 template <SharedPtrIterator<const Guest> GuestIt>
@@ -66,7 +67,7 @@ std::unordered_map<int, int> calculatePageFrequencies(HostIt hostsBegin, HostIt 
 {
     std::unordered_map<int, int> frequencies;
     for (; hostsBegin != hostsEnd; ++hostsBegin) {
-        for (const auto &guest : (*hostsBegin)->guests) {
+        for (const auto &guest : (*hostsBegin)->getGuests()) {
             for (const auto &page : guest->pages) {
                 ++frequencies[page];
             }

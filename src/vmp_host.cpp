@@ -37,32 +37,42 @@ void Host::clearGuests()
     pageFrequencies.clear();
 }
 
+size_t Host::getCapacity() const
+{
+    return capacity;
+}
+
+const std::set<std::shared_ptr<const Guest>> &Host::getGuests() const
+{
+    return guests;
+}
+
 bool Host::accommodatesGuest(const Guest &guest) const
 {
     return countPagesWithGuest(guest) <= capacity;
 }
 
-size_t Host::pageFrequency(const int page) const
+size_t Host::getPageFrequency(const int page) const
 {
     return pageFrequencies.contains(page) ? pageFrequencies.at(page) : 0;
 }
 
-size_t Host::uniquePageCount() const
+size_t Host::getUniquePageCount() const
 {
     return pageFrequencies.size();
 }
 
 size_t Host::countPagesWithGuest(const Guest &guest) const
 {
-    return uniquePageCount() + guest.pageCount() - guest.countPagesOn(*this);
+    return getUniquePageCount() + guest.getPageCount() - guest.countPagesOn(*this);
 }
 
 size_t Host::countPagesNotOn(const Guest &guest) const
 {
-    return uniquePageCount() - guest.countPagesOn(*this);
+    return getUniquePageCount() - guest.countPagesOn(*this);
 }
 
-size_t Host::guestCount() const
+size_t Host::getGuestCount() const
 {
     return guests.size();
 }
