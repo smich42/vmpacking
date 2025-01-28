@@ -73,7 +73,7 @@ struct Cost
     {
     }
 
-    void setFromSelection(const std::set<size_t> &selection, const std::set<int> &pages,
+    void setFromSelection(const std::vector<size_t> &selection, const std::set<int> &pages,
                           const ClusterTreeInstance &instance)
     {
         pageCount = static_cast<int>(pages.size());
@@ -104,32 +104,33 @@ struct Cost
     ~Cost() = default;
 };
 
-static std::pair<std::set<size_t>, std::set<int>>
+static std::pair<std::vector<size_t>, std::set<int>>
 selectNodesByMask(const ClusterTreeInstance &instance, const std::vector<size_t> &pool,
                   const uint64_t mask)
 {
     std::set<int> pages;
-    std::set<size_t> selection;
+    std::vector<size_t> selection;
 
     for (uint64_t i = 0; i < pool.size(); i++) {
         if (mask & 1ULL << i) {
             const auto &nodePages = instance.getNodePages(pool[i]);
             pages.insert(nodePages.begin(), nodePages.end());
-            selection.insert(pool[i]);
+            selection.push_back(pool[i]);
         }
     }
+
     return { selection, pages };
 }
 
-static size_t makeAccessibleChildrenMask(const std::vector<size_t> &nodes,
-                                         const std::vector<size_t> &parentCandidates,
+static size_t makeAccessibleChildrenMask(const std::vector<size_t> &children,
+                                         const std::vector<size_t> &allowedParents,
                                          const ClusterTreeInstance &instance)
 {
     size_t accessibleChildrenMask = 0;
-    for (int i = 0; i < nodes.size(); ++i) {
-        const auto &trueParents = instance.getNodeParents(nodes[i]);
+    for (int i = 0; i < children.size(); ++i) {
+        const auto &trueParents = instance.getNodeParents(children[i]);
 
-        for (const size_t parentCandidate : parentCandidates) {
+        for (const size_t parentCandidate : allowedParents) {
             if (std::ranges::find(trueParents, parentCandidate) != trueParents.end()) {
                 accessibleChildrenMask |= 1ULL << i;
                 break;
@@ -257,6 +258,12 @@ Host maximiseOneHostByClusterTree(const ClusterTreeInstance &instance,
                     costs[curKey].setFromSelection(curSelection, curSelectionPages, instance);
                 }
 
+                // std::cout << "Cluster: " << curKey.cluster
+                //           << ", Selection: " << std::bitset<3>(curMask)
+                //           << ", j: " << curKey.childCount << ", Profit: " << curKey.profitTarget
+                //           << " = pageCount: " << costs[curKey].pageCount
+                //           << ", guests: " << costs[curKey].guests.size() << std::endl;
+
                 // Allow taking from the first j children at a time
                 for (size_t j = 1; j <= curChildren.size(); ++j) {
                     // We will compute cost[n, s, j, p]
@@ -270,9 +277,10 @@ Host maximiseOneHostByClusterTree(const ClusterTreeInstance &instance,
                     const size_t newChild = curChildren[j - 1];
                     const std::vector<size_t> &newChildNodes = instance.getClusterNodes(newChild);
                     const size_t accessibleChildrenMask =
-                        makeAccessibleChildrenMask(newChildNodes, curNodes, instance);
+                        makeAccessibleChildrenMask(newChildNodes, curSelection, instance);
 
-                    // Try to make `profitComplement` profit from the newly considered child cluster
+                    // Try to make `profitComplement` profit from the newly considered child
+                    // cluster
                     for (size_t profitComplement = 0; profitComplement <= profitTarget;
                          ++profitComplement) {
                         const Cost bestChildCost =
@@ -295,6 +303,12 @@ Host maximiseOneHostByClusterTree(const ClusterTreeInstance &instance,
                             costs[curKey].setFromCombinationOfDisjoint(prevCost, bestChildCost);
                         }
                     }
+                    // std::cout << "Cluster: " << curKey.cluster
+                    //           << ", Selection: " << std::bitset<3>(curMask)
+                    //           << ", j: " << curKey.childCount << ", Profit: " <<
+                    //           curKey.profitTarget
+                    //           << " = pageCount: " << costs[curKey].pageCount
+                    //           << ", guests: " << costs[curKey].guests.size() << std::endl;
                 }
             }
         }

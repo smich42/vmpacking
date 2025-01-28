@@ -50,7 +50,13 @@ size_t ClusterTreeInstance::addLeaf(const std::vector<size_t> &parents,
 
     for (const size_t parent : parents) {
         nodes[parent].children.push_back(newNode);
+
+        if (std::ranges::find(clusters[parentCluster].children, newCluster) ==
+            clusters[parentCluster].children.end()) {
+            clusters[nodes[parent].cluster].children.push_back(newCluster);
+        }
     }
+
     return newNode;
 }
 

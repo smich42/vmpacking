@@ -16,20 +16,21 @@ size_t Guest::getPageCount() const
 
 size_t Guest::countPagesOn(const Host &host) const
 {
-    return std::ranges::count_if(pages, [&](const int page) { return host.getPageFrequency(page); });
+    return std::ranges::count_if(pages,
+                                 [&](const int page) { return host.getPageFrequency(page); });
 }
 
-std::ostream &operator<<(std::ostream &os, const Guest &instance)
+std::ostream &operator<<(std::ostream &os, const Guest &guest)
 {
-    os << "Guest{ pages=[";
-    if (!instance.pages.empty()) {
-        auto it = instance.pages.begin();
+    os << "Guest{ [";
+    if (!guest.pages.empty()) {
+        auto it = guest.pages.begin();
         os << *it;
-        while (++it != instance.pages.end()) {
+        while (++it != guest.pages.end()) {
             os << ", " << *it;
         }
     }
-    os << "] (len: " << instance.getPageCount() << ") }";
+    os << "] (len=" << guest.getPageCount() << ") }";
     return os;
 }
 

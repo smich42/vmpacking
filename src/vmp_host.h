@@ -102,6 +102,8 @@ class Host
     [[nodiscard]] size_t getCapacity() const;
     [[nodiscard]] const std::set<std::shared_ptr<const Guest>> &getGuests() const;
 
+    friend std::ostream &operator<<(std::ostream &os, const Host &host);
+
   private:
     // Store page frequencies as the number of guests that have a page is
     // useful some Grange heuristics

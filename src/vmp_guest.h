@@ -17,7 +17,7 @@ class Guest
 
     const std::set<int> pages;
 
-    friend std::ostream &operator<<(std::ostream &os, const Guest &instance);
+    friend std::ostream &operator<<(std::ostream &os, const Guest &guest);
 };
 
 }  // namespace vmp

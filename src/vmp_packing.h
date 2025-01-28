@@ -1,6 +1,9 @@
 #ifndef SOLVERS_PACKING_H
 #define SOLVERS_PACKING_H
 
+#include <iostream>
+
+#include <ostream>
 #include <vmp_generalinstance.h>
 #include <vmp_host.h>
 
@@ -32,8 +35,12 @@ class Packing
         requires Instance<InstanceType>
     bool validateForInstance(const InstanceType &instance) const
     {
+        std::cout << "Instance capacity: " << instance.getCapacity() << std::endl;
+
         std::unordered_set<std::shared_ptr<const Guest>> placedGuests;
         for (const auto &host : hosts) {
+            std::cout << *host << std::endl;
+
             if (host->getGuests().empty()) {
                 return false;
             }

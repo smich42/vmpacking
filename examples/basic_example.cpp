@@ -54,7 +54,7 @@ void runSingleHostMaximiser(vmp::Host (*maximiser)(const InstanceType &instance)
 
 void runClusterTree()
 {
-    vmp::ClusterTreeInstance instance(11);
+    vmp::ClusterTreeInstance instance(10);
 
     const size_t rootCluster = vmp::ClusterTreeInstance::getRootCluster();
     const size_t clusterA = instance.createCluster(rootCluster);
@@ -73,14 +73,14 @@ void runClusterTree()
     const size_t leaf3 = instance.addLeaf({ nodeB }, guest3, std::set{ 9, 10 });
     const size_t leaf4 = instance.addLeaf({ nodeB }, guest4, std::set{ 11, 12 });
 
-    const vmp::Host host = maximiseOneHostByClusterTree(
-        instance, { { guest1, 1 }, { guest2, 1 }, { guest3, 1 }, { guest4, 1 } });
-
-    std::cout << "Pages used: " << host.getUniquePageCount() << std::endl;
-    std::cout << "Selected guests:" << std::endl;
-    for (const auto &guest : host.getGuests()) {
-        std::cout << guest << std::endl;
-    }
+    // const vmp::Host host = maximiseOneHostByClusterTree(
+    //     instance, { { guest1, 1 }, { guest2, 1 }, { guest3, 1 }, { guest4, 1 } });
+    //
+    // std::cout << "Pages used: " << host.getUniquePageCount() << std::endl;
+    // std::cout << "Selected guests:" << std::endl;
+    // for (const auto &guest : host.getGuests()) {
+    //     std::cout << *guest << std::endl;
+    // }
 
     constexpr double oneHostApprox = 25;  // Throwaway, base it on clusterSize
     constexpr double epsilon = 0.0001;    // Throwaway, base it on oneHostApprox
