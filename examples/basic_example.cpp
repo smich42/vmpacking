@@ -54,33 +54,24 @@ void runSingleHostMaximiser(vmp::Host (*maximiser)(const InstanceType &instance)
 
 void runClusterTree()
 {
-    vmp::ClusterTreeInstance instance(9);
+    vmp::ClusterTreeInstance instance(8);
 
     const size_t rootCluster = vmp::ClusterTreeInstance::getRootCluster();
     const size_t clusterA = instance.createCluster(rootCluster);
     const size_t clusterB = instance.createCluster(rootCluster);
     const size_t nodeR1 = instance.addInner(rootCluster, {}, { 1, 2 });
-    const size_t nodeA = instance.addInner(clusterA, { nodeR1 }, { 3, 4 });
+    const size_t nodeA = instance.addInner(clusterA, { nodeR1 }, { 4 });
     const size_t nodeB = instance.addInner(clusterB, { nodeR1 }, { 3, 4 });
 
     const auto guest1 = std::make_shared<vmp::Guest>(std::set{ 1, 2, 3, 4, 5, 6 });
-    const auto guest2 = std::make_shared<vmp::Guest>(std::set{ 1, 2, 3, 4, 7, 8 });
+    const auto guest2 = std::make_shared<vmp::Guest>(std::set{ 1, 2, 3, 4, 5, 8, 9 });
     const auto guest3 = std::make_shared<vmp::Guest>(std::set{ 1, 2, 3, 4, 9, 10 });
     const auto guest4 = std::make_shared<vmp::Guest>(std::set{ 1, 2, 3, 4, 11, 12 });
 
-    const size_t leaf1 = instance.addLeaf({ nodeA }, guest1, std::set{ 5, 6 });
-    const size_t leaf2 = instance.addLeaf({ nodeA }, guest2, std::set{ 7, 8 });
+    const size_t leaf1 = instance.addLeaf({ nodeA }, guest1, std::set{ 3, 5, 6 });
+    const size_t leaf2 = instance.addLeaf({ nodeA }, guest2, std::set{ 3, 5, 8, 9 });
     const size_t leaf3 = instance.addLeaf({ nodeB }, guest3, std::set{ 9, 10 });
     const size_t leaf4 = instance.addLeaf({ nodeB }, guest4, std::set{ 11, 12 });
-
-    // const vmp::Host host = maximiseOneHostByClusterTree(
-    //     instance, { { guest1, 1 }, { guest2, 1 }, { guest3, 1 }, { guest4, 1 } });
-    //
-    // std::cout << "Pages used: " << host.getUniquePageCount() << std::endl;
-    // std::cout << "Selected guests:" << std::endl;
-    // for (const auto &guest : host.getGuests()) {
-    //     std::cout << *guest << std::endl;
-    // }
 
     constexpr double oneHostApprox = 25;  // Throwaway, base it on clusterSize
     constexpr double epsilon = 0.0001;    // Throwaway, base it on oneHostApprox
