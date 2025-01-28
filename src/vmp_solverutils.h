@@ -147,6 +147,17 @@ makeShareGraphComponentGuestPartitions(GuestIt guestsBegin, GuestIt guestsEnd)
     return result;
 }
 
+struct TreeLowerBounds
+{
+    size_t size;   // The total number of pages to pack a subtree
+    size_t count;  // The number of hosts required to pack the subtree
+
+    TreeLowerBounds(const size_t size, const size_t count) : size(size), count(count) {}
+};
+
+std::unordered_map<size_t, TreeLowerBounds>
+calculateAllSubtreeLowerBounds(const TreeInstance &instance);
+
 }  // namespace vmp
 
 #endif  // VMP_SOLVERUTILS_H

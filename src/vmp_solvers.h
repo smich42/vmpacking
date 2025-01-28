@@ -86,7 +86,13 @@ Packing solveByMaximiser(const InstanceType &instance,
     return *bestPacking;
 }
 
-Packing solveSimpleTree(const ClusterTreeInstance &instance);
+/**
+ * Solves VM-PACK by the Sinderal, et al. (2011) greedy algorithm on the tree model.
+ *
+ * @param instance the instance to solve
+ * @return a valid packing
+ */
+Packing solveSimpleTree(const TreeInstance &instance);
 
 }  // namespace vmp
 

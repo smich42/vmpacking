@@ -1,6 +1,7 @@
 #ifndef VMP_TREEINSTANCE_H
 #define VMP_TREEINSTANCE_H
 
+#include <queue>
 #include <vmp_guest.h>
 
 #include <unordered_set>
@@ -22,8 +23,13 @@ class TreeInstance
     [[nodiscard]] const std::shared_ptr<const Guest> &getNodeGuest(size_t node) const;
     [[nodiscard]] bool nodeIsLeaf(size_t node) const;
     [[nodiscard]] size_t getNodeCount() const;
+    [[nodiscard]] size_t getCapacity() const;
+    [[nodiscard]] std::vector<std::shared_ptr<const Guest>> getGuests() const;
+    [[nodiscard]] const std::vector<size_t> &getLeaves() const;
+    static size_t getRootNode();
 
-    explicit TreeInstance() = default;
+    explicit TreeInstance(size_t capacity, const std::unordered_set<int> &rootPages,
+                          const std::shared_ptr<const Guest> &rootGuest);
 
   private:
     struct Node
@@ -37,7 +43,7 @@ class TreeInstance
 
         std::shared_ptr<const Guest> guest;
 
-        Node(size_t parent, const std::unordered_set<int> &pages,
+        Node(const size_t parent, const std::unordered_set<int> &pages,
              const std::shared_ptr<const Guest> &guest)
             : parent(parent), pages(pages), guest(guest)
         {
@@ -45,6 +51,10 @@ class TreeInstance
     };
 
     std::vector<Node> nodes;
+    std::vector<size_t> leaves;
+
+    const size_t capacity;
+    static constexpr size_t ROOT_NODE = 0;
 };
 
 }  // namespace vmp

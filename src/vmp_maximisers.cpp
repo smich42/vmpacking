@@ -10,9 +10,9 @@
 namespace vmp
 {
 
-Host maximiseOneHostBySubsetEfficiency(const GeneralInstance &instance,
-                                       const std::unordered_map<std::shared_ptr<const Guest>, int> &profits,
-                                       int initialSubsetSize)
+Host maximiseOneHostBySubsetEfficiency(
+    const GeneralInstance &instance,
+    const std::unordered_map<std::shared_ptr<const Guest>, int> &profits, int initialSubsetSize)
 {
     Host host(instance.getCapacity());
     std::unordered_map<std::shared_ptr<const Guest>, int> unplaced = profits;
@@ -73,8 +73,8 @@ struct Cost
     {
     }
 
-    void setFromSelection(const std::vector<size_t> &selection, const std::unordered_set<int> &pages,
-                          const ClusterTreeInstance &instance)
+    void setFromSelection(const std::vector<size_t> &selection,
+                          const std::unordered_set<int> &pages, const ClusterTreeInstance &instance)
     {
         pageCount = static_cast<int>(pages.size());
         guests.clear();
@@ -192,8 +192,9 @@ static std::optional<Cost> findMostProfitableScenarioAtRoot(const auto &costs,
     return bestProfitCost;
 }
 
-Host maximiseOneHostByClusterTree(const ClusterTreeInstance &instance,
-                                  const std::unordered_map<std::shared_ptr<const Guest>, int> &profits)
+Host maximiseOneHostByClusterTree(
+    const ClusterTreeInstance &instance,
+    const std::unordered_map<std::shared_ptr<const Guest>, int> &profits)
 {
     std::unordered_map<ProfitScenario, Cost,
                        decltype([](const ProfitScenario &k) { return k.hash(); })>
@@ -214,11 +215,10 @@ Host maximiseOneHostByClusterTree(const ClusterTreeInstance &instance,
     std::queue<size_t> clustersToVisit;
 
     for (size_t cluster = 0; cluster < instance.getClusterCount(); ++cluster) {
-        if (instance.clusterIsLeaf(cluster)) {
+        const size_t childCount = instance.getClusterChildren(cluster).size();
+
+        if ((unvisitedClusterChildCount[cluster] = childCount) == 0) {
             clustersToVisit.push(cluster);
-        }
-        else {
-            unvisitedClusterChildCount[cluster] = instance.getClusterChildren(cluster).size();
         }
     }
 
