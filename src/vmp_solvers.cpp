@@ -1,8 +1,10 @@
 #include <vmp_solvers.h>
 
+#include <vmp_solverutils.h>
+#include <vmp_treeinstance.h>
+
 #include <numeric>
 #include <ostream>
-#include <vmp_solverutils.h>
 
 namespace vmp
 {
@@ -118,7 +120,7 @@ static void proceedByBestFusion(size_t capacity, GuestIt guestsBegin, GuestIt gu
 
     // TODO ordered set only provides quasi-deterministic behaviour; depends on
     // raw pointer addresses
-    using SetGuestIt = std::set<std::shared_ptr<const Guest>>::iterator;
+    using SetGuestIt = std::unordered_set<std::shared_ptr<const Guest>>::iterator;
     decantGuests<SetGuestIt>(hosts, makeOneGuestPartition<SetGuestIt>);
     decantGuests<SetGuestIt>(hosts, makeShareGraphComponentGuestPartitions<SetGuestIt>);
     decantGuests<SetGuestIt>(hosts, makeIndividualGuestPartitions<SetGuestIt>);
@@ -148,7 +150,8 @@ static void proceedByOverloadAndRemove(size_t capacity, GuestIt guestsBegin, Gue
                                        std::vector<std::shared_ptr<Host>> &hosts)
 {
     std::deque unplaced(guestsBegin, guestsEnd);
-    std::map<std::shared_ptr<const Guest>, std::set<std::shared_ptr<Host>>> attemptedPlacements;
+    std::unordered_map<std::shared_ptr<const Guest>, std::unordered_set<std::shared_ptr<Host>>>
+        attemptedPlacements;
     const auto frequencies = calculatePageFrequencies(guestsBegin, guestsEnd);
 
     while (!unplaced.empty()) {
@@ -203,7 +206,7 @@ static void proceedByOverloadAndRemove(size_t capacity, GuestIt guestsBegin, Gue
 
     proceedByFirstFit(capacity, unplaced.begin(), unplaced.end(), hosts);
 
-    using SetGuestIt = std::set<std::shared_ptr<const Guest>>::iterator;
+    using SetGuestIt = std::unordered_set<std::shared_ptr<const Guest>>::iterator;
     decantGuests<SetGuestIt>(hosts, makeOneGuestPartition<SetGuestIt>);
     decantGuests<SetGuestIt>(hosts, makeShareGraphComponentGuestPartitions<SetGuestIt>);
     decantGuests<SetGuestIt>(hosts, makeIndividualGuestPartitions<SetGuestIt>);
@@ -221,7 +224,7 @@ Packing solveByOverloadAndRemove(const GeneralInstance &instance)
 Packing solveByLocalityScore(const GeneralInstance &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
-    std::set unplaced(instance.getGuests().begin(), instance.getGuests().end());
+    std::unordered_set unplaced(instance.getGuests().begin(), instance.getGuests().end());
 
     while (!unplaced.empty()) {
         std::shared_ptr<const Guest> largestGuest;
@@ -259,17 +262,6 @@ Packing solveByLocalityScore(const GeneralInstance &instance)
     return Packing(hosts);
 }
 
-Packing solveClusterTree(const ClusterTreeInstance &instance) {}
-
-Packing solveSimpleTree(const ClusterTreeInstance &instance)
-{
-    const auto &leaves = instance.getLeafNodes();
-    std::vector hosts(leaves.size(), std::make_shared<Host>(instance.getCapacity()));
-
-    int capacity = instance.getCapacity();
-
-    for (const size_t leaf : leaves) {
-    }
-}
+Packing solveSimpleTree(const TreeInstance &instance) {}
 
 }  // namespace vmp

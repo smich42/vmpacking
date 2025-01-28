@@ -7,7 +7,7 @@
 namespace vmp
 {
 
-Guest::Guest(const std::set<int> &pages) : pages(pages) {}
+Guest::Guest(const std::unordered_set<int> &pages) : pages(pages) {}
 
 size_t Guest::getPageCount() const
 {

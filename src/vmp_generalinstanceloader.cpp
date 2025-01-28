@@ -68,7 +68,7 @@ std::vector<GeneralInstance> GeneralInstanceLoader::makeGeneralInstances() const
     for (int i = 0; i < capacityData.size(); i++) {
         std::vector<std::shared_ptr<const Guest>> guests;
         std::ranges::transform(guestData[i], std::back_inserter(guests), [](const auto &pages) {
-            return std::make_shared<Guest>(std::set(std::make_move_iterator(pages.begin()),
+            return std::make_shared<Guest>(std::unordered_set(std::make_move_iterator(pages.begin()),
                                                     std::make_move_iterator(pages.end())));
         });
 

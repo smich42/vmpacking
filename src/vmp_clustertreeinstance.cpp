@@ -18,7 +18,7 @@ bool ClusterTreeInstance::checkNodesAreInCluster(const std::vector<size_t> &node
 }
 
 size_t ClusterTreeInstance::addInner(const size_t cluster, const std::vector<size_t> &parents,
-                                     const std::set<int> &pages)
+                                     const std::unordered_set<int> &pages)
 {
     assert(checkNodesAreInCluster(parents, clusters[cluster].parent));
 
@@ -34,7 +34,7 @@ size_t ClusterTreeInstance::addInner(const size_t cluster, const std::vector<siz
 
 size_t ClusterTreeInstance::addLeaf(const std::vector<size_t> &parents,
                                     const std::shared_ptr<const Guest> &guest,
-                                    const std::set<int> &pages)
+                                    const std::unordered_set<int> &pages)
 {
     assert(!parents.empty());
 
@@ -125,7 +125,7 @@ size_t ClusterTreeInstance::getClusterCount() const
     return this->clusters.size();
 }
 
-const std::set<int> &ClusterTreeInstance::getNodePages(const size_t node) const
+const std::unordered_set<int> &ClusterTreeInstance::getNodePages(const size_t node) const
 {
     return nodes[node].pages;
 }

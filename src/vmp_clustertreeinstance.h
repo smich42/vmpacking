@@ -11,9 +11,9 @@ namespace vmp
 class ClusterTreeInstance
 {
   public:
-    size_t addInner(size_t cluster, const std::vector<size_t> &parents, const std::set<int> &pages);
+    size_t addInner(size_t cluster, const std::vector<size_t> &parents, const std::unordered_set<int> &pages);
     size_t addLeaf(const std::vector<size_t> &parents, const std::shared_ptr<const Guest> &guest,
-                   const std::set<int> &pages);
+                   const std::unordered_set<int> &pages);
 
     size_t createCluster(size_t parent);
 
@@ -24,7 +24,7 @@ class ClusterTreeInstance
 
     [[nodiscard]] const std::vector<size_t> &getNodeParents(size_t node) const;
     [[nodiscard]] const std::vector<size_t> &getNodeChildren(size_t node) const;
-    [[nodiscard]] const std::set<int> &getNodePages(size_t node) const;
+    [[nodiscard]] const std::unordered_set<int> &getNodePages(size_t node) const;
     [[nodiscard]] const std::shared_ptr<const Guest> &getNodeGuest(size_t node) const;
     [[nodiscard]] bool nodeIsLeaf(size_t node) const;
     [[nodiscard]] size_t getNodeCount() const;
@@ -50,12 +50,12 @@ class ClusterTreeInstance
 
         // If it's an inner node, the pages shared by all descendants
         // If it's a leaf, the pages unique to the node
-        std::set<int> pages;
+        std::unordered_set<int> pages;
 
         std::shared_ptr<const Guest> guest;
         size_t cluster;
 
-        Node(const std::vector<size_t> &parents, const std::set<int> &pages,
+        Node(const std::vector<size_t> &parents, const std::unordered_set<int> &pages,
              const std::shared_ptr<const Guest> &guest, const size_t cluster)
             : parents(parents), pages(pages), guest(guest), cluster(cluster)
         {

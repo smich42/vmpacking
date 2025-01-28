@@ -42,7 +42,7 @@ size_t Host::getCapacity() const
     return capacity;
 }
 
-const std::set<std::shared_ptr<const Guest>> &Host::getGuests() const
+const std::unordered_set<std::shared_ptr<const Guest>> &Host::getGuests() const
 {
     return guests;
 }

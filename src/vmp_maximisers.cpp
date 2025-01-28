@@ -11,11 +11,11 @@ namespace vmp
 {
 
 Host maximiseOneHostBySubsetEfficiency(const GeneralInstance &instance,
-                                       const std::map<std::shared_ptr<const Guest>, int> &profits,
+                                       const std::unordered_map<std::shared_ptr<const Guest>, int> &profits,
                                        int initialSubsetSize)
 {
     Host host(instance.getCapacity());
-    std::map<std::shared_ptr<const Guest>, int> unplaced = profits;
+    std::unordered_map<std::shared_ptr<const Guest>, int> unplaced = profits;
 
     while (true) {
         auto bestGuestSet = findMostEfficientSubset(unplaced, host, initialSubsetSize);
@@ -73,7 +73,7 @@ struct Cost
     {
     }
 
-    void setFromSelection(const std::vector<size_t> &selection, const std::set<int> &pages,
+    void setFromSelection(const std::vector<size_t> &selection, const std::unordered_set<int> &pages,
                           const ClusterTreeInstance &instance)
     {
         pageCount = static_cast<int>(pages.size());
@@ -104,11 +104,11 @@ struct Cost
     ~Cost() = default;
 };
 
-static std::pair<std::vector<size_t>, std::set<int>>
+static std::pair<std::vector<size_t>, std::unordered_set<int>>
 selectNodesByMask(const ClusterTreeInstance &instance, const std::vector<size_t> &pool,
                   const uint64_t mask)
 {
-    std::set<int> pages;
+    std::unordered_set<int> pages;
     std::vector<size_t> selection;
 
     for (uint64_t i = 0; i < pool.size(); i++) {
@@ -193,7 +193,7 @@ static std::optional<Cost> findMostProfitableScenarioAtRoot(const auto &costs,
 }
 
 Host maximiseOneHostByClusterTree(const ClusterTreeInstance &instance,
-                                  const std::map<std::shared_ptr<const Guest>, int> &profits)
+                                  const std::unordered_map<std::shared_ptr<const Guest>, int> &profits)
 {
     std::unordered_map<ProfitScenario, Cost,
                        decltype([](const ProfitScenario &k) { return k.hash(); })>

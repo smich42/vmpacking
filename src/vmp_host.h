@@ -3,8 +3,8 @@
 
 #include <vmp_types.h>
 
-#include <map>
-#include <set>
+#include <unordered_map>
+#include <unordered_set>
 #include <vmp_guest.h>
 
 namespace vmp
@@ -66,7 +66,7 @@ class Host
     template <SharedPtrIterator<const Guest> GuestIt>
     [[nodiscard]] size_t countPagesWithGuests(GuestIt guestsBegin, GuestIt guestsEnd) const
     {
-        std::set<int> newPages;
+        std::unordered_set<int> newPages;
         for (; guestsBegin != guestsEnd; ++guestsBegin) {
             for (const int page : (*guestsBegin)->pages) {
                 if (!pageFrequencies.contains(page)) {
@@ -100,17 +100,17 @@ class Host
     void clearGuests();
 
     [[nodiscard]] size_t getCapacity() const;
-    [[nodiscard]] const std::set<std::shared_ptr<const Guest>> &getGuests() const;
+    [[nodiscard]] const std::unordered_set<std::shared_ptr<const Guest>> &getGuests() const;
 
     friend std::ostream &operator<<(std::ostream &os, const Host &host);
 
   private:
     // Store page frequencies as the number of guests that have a page is
     // useful some Grange heuristics
-    std::map<int, int> pageFrequencies;
+    std::unordered_map<int, int> pageFrequencies;
 
     const size_t capacity;
-    std::set<std::shared_ptr<const Guest>> guests;
+    std::unordered_set<std::shared_ptr<const Guest>> guests;
 };
 
 }  // namespace vmp

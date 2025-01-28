@@ -88,8 +88,6 @@ Packing solveByMaximiser(const InstanceType &instance,
 
 Packing solveSimpleTree(const ClusterTreeInstance &instance);
 
-Packing solveClusterTree(const ClusterTreeInstance &instance);
-
 }  // namespace vmp
 
 #endif  // VMP_SOLVERS_H
