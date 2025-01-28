@@ -10,19 +10,19 @@
 namespace vmp
 {
 
-Host maximiseOneHostBySubsetValues(const GeneralInstance &instance,
-                                   const std::map<std::shared_ptr<const Guest>, int> &profits,
-                                   int initialSubsetSize)
+Host maximiseOneHostBySubsetEfficiency(const GeneralInstance &instance,
+                                       const std::map<std::shared_ptr<const Guest>, int> &profits,
+                                       int initialSubsetSize)
 {
     Host host(instance.getCapacity());
     std::map<std::shared_ptr<const Guest>, int> unplaced = profits;
 
     while (true) {
-        auto bestGuestSet = findMaxValueSubset(unplaced, host, initialSubsetSize);
+        auto bestGuestSet = findMostEfficientSubset(unplaced, host, initialSubsetSize);
 
         while (!bestGuestSet.has_value() && initialSubsetSize > 0) {
             --initialSubsetSize;
-            bestGuestSet = findMaxValueSubset(unplaced, host, initialSubsetSize);
+            bestGuestSet = findMostEfficientSubset(unplaced, host, initialSubsetSize);
         }
 
         if (!bestGuestSet.has_value()) {
@@ -258,12 +258,6 @@ Host maximiseOneHostByClusterTree(const ClusterTreeInstance &instance,
                     costs[curKey].setFromSelection(curSelection, curSelectionPages, instance);
                 }
 
-                // std::cout << "Cluster: " << curKey.cluster
-                //           << ", Selection: " << std::bitset<3>(curMask)
-                //           << ", j: " << curKey.childCount << ", Profit: " << curKey.profitTarget
-                //           << " = pageCount: " << costs[curKey].pageCount
-                //           << ", guests: " << costs[curKey].guests.size() << std::endl;
-
                 // Allow taking from the first j children at a time
                 for (size_t j = 1; j <= curChildren.size(); ++j) {
                     // We will compute cost[n, s, j, p]
@@ -272,8 +266,10 @@ Host maximiseOneHostByClusterTree(const ClusterTreeInstance &instance,
                     costs[curKey] = costs.at({ cluster, curMask, j - 1, profitTarget });
 
                     // Only those nodes in the child cluster that have at least one parent in the
-                    // current selection are accessible As the mask must be over all the cluster's
-                    // TODO: maybe use the set itself as key
+                    // current selection are accessible, as the mask must be over all the cluster's
+                    // nodes
+                    // TODO: consider computing the subset of viable children first and generate all
+                    // of ITS subsets
                     const size_t newChild = curChildren[j - 1];
                     const std::vector<size_t> &newChildNodes = instance.getClusterNodes(newChild);
                     const size_t accessibleChildrenMask =
@@ -303,12 +299,6 @@ Host maximiseOneHostByClusterTree(const ClusterTreeInstance &instance,
                             costs[curKey].setFromCombinationOfDisjoint(prevCost, bestChildCost);
                         }
                     }
-                    // std::cout << "Cluster: " << curKey.cluster
-                    //           << ", Selection: " << std::bitset<3>(curMask)
-                    //           << ", j: " << curKey.childCount << ", Profit: " <<
-                    //           curKey.profitTarget
-                    //           << " = pageCount: " << costs[curKey].pageCount
-                    //           << ", guests: " << costs[curKey].guests.size() << std::endl;
                 }
             }
         }

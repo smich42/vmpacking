@@ -54,7 +54,7 @@ void runSingleHostMaximiser(vmp::Host (*maximiser)(const InstanceType &instance)
 
 void runClusterTree()
 {
-    vmp::ClusterTreeInstance instance(10);
+    vmp::ClusterTreeInstance instance(9);
 
     const size_t rootCluster = vmp::ClusterTreeInstance::getRootCluster();
     const size_t clusterA = instance.createCluster(rootCluster);
@@ -121,7 +121,7 @@ int main()
             for (const auto &guest : inst.getGuests()) {
                 profits[guest] = 1;
             }
-            return maximiseOneHostBySubsetValues(inst, profits, 1);
+            return maximiseOneHostBySubsetEfficiency(inst, profits, 1);
         },
         "GSAVVM", instance);
 
@@ -132,15 +132,15 @@ int main()
     // Compose one host maximiser -> local search maximiser -> solver
     runSolver<vmp::GeneralInstance>(
         [](const vmp::GeneralInstance &inst) {
-            return solveByMaximiser<vmp::GeneralInstance>(
-                inst, [](const auto &inst, const size_t hostCount) {
-                    return maximiseByLocalSearch<vmp::GeneralInstance>(
-                        inst, hostCount,
-                        [](const auto &inst, const auto &profits) {
-                            return maximiseOneHostBySubsetValues(inst, profits, initialSubsetSize);
-                        },
-                        oneHostApprox, epsilon);
-                });
+            return solveByMaximiser<vmp::GeneralInstance>(inst, [](const auto &inst,
+                                                                   const size_t hostCount) {
+                return maximiseByLocalSearch<vmp::GeneralInstance>(
+                    inst, hostCount,
+                    [](const auto &inst, const auto &profits) {
+                        return maximiseOneHostBySubsetEfficiency(inst, profits, initialSubsetSize);
+                    },
+                    oneHostApprox, epsilon);
+            });
         },
         "Local Search on Subset Value Maximiser", instance);
 

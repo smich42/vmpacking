@@ -21,8 +21,8 @@ namespace vmp
  * @return the most efficient subset of guests, or std::nullopt if no valid
  */
 static std::optional<std::vector<std::pair<std::shared_ptr<const Guest>, int>>>
-findMaxValueSubset(const std::map<std::shared_ptr<const Guest>, int> &unplaced, const Host &host,
-                   const int subsetSize)
+findMostEfficientSubset(const std::map<std::shared_ptr<const Guest>, int> &unplaced,
+                        const Host &host, const int subsetSize)
 {
     // TODO: parameterise the value function?
     std::vector<bool> selector(unplaced.size());
@@ -79,9 +79,9 @@ findMaxValueSubset(const std::map<std::shared_ptr<const Guest>, int> &unplaced, 
  * Defaults to 1.
  * @return a host with the most valuable guests placed
  */
-Host maximiseOneHostBySubsetValues(const GeneralInstance &instance,
-                                   const std::map<std::shared_ptr<const Guest>, int> &profits,
-                                   int initialSubsetSize = 1);
+Host maximiseOneHostBySubsetEfficiency(const GeneralInstance &instance,
+                                       const std::map<std::shared_ptr<const Guest>, int> &profits,
+                                       int initialSubsetSize = 1);
 
 /**
  * Maximises the number of guests placed on a single host on the Cluster Tree
