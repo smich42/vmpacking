@@ -1,6 +1,8 @@
 #ifndef VMP_ITERATORS_H
 #define VMP_ITERATORS_H
 
+#include <vmp_treeinstance.h>
+
 #include <vmp_clustertreeinstance.h>
 #include <vmp_generalinstance.h>
 
@@ -17,10 +19,9 @@ template <typename It, typename K, typename V>
 concept PairIterator =
     std::input_iterator<It> && std::same_as<std::iter_value_t<It>, std::pair<K, V>>;
 
-// using GuestProfitVecIt = std::vector<std::pair<std::shared_ptr<const Guest>, int>>::iterator;
-
 template <typename T>
-concept Instance = std::same_as<T, GeneralInstance> || std::same_as<T, ClusterTreeInstance>;
+concept Instance = std::same_as<T, GeneralInstance> || std::same_as<T, ClusterTreeInstance> ||
+                   std::same_as<T, TreeInstance>;
 
 }  // namespace vmp
 

@@ -21,6 +21,9 @@ size_t ClusterTreeInstance::addInner(const size_t cluster, const std::vector<siz
                                      const std::unordered_set<int> &pages)
 {
     assert(checkNodesAreInCluster(parents, clusters[cluster].parent));
+    for (const size_t node : parents) {
+        assert(!nodeIsLeaf(node));
+    }
 
     const size_t newNode = nodes.size();
     nodes.emplace_back(parents, pages, nullptr, cluster);
@@ -137,12 +140,12 @@ const std::shared_ptr<const Guest> &ClusterTreeInstance::getNodeGuest(const size
 
 bool ClusterTreeInstance::nodeIsLeaf(const size_t node) const
 {
-    return nodes[node].children.empty();
+    return nodes[node].guest != nullptr;
 }
 
 bool ClusterTreeInstance::clusterIsLeaf(const size_t cluster) const
 {
-    return clusters[cluster].children.empty();
+    return clusters[cluster].nodes.size() == 1 && nodeIsLeaf(clusters[cluster].nodes[0]);
 }
 
 size_t ClusterTreeInstance::getNodeCount() const
