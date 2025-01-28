@@ -154,7 +154,7 @@ static std::optional<Cost> findLowestCostAccessibleSelection(const auto &costs,
     const std::vector<size_t> &nodes = instance.getClusterNodes(cluster);
     assert(nodes.size() < 64);
 
-    const Cost *lowestCost = nullptr;
+    std::optional<Cost> lowestCost;
 
     for (uint64_t selectionMask = 0; selectionMask < 1ULL << nodes.size(); ++selectionMask) {
         if (!checkAllAccessible(selectionMask, accessibleMask)) {
@@ -164,13 +164,13 @@ static std::optional<Cost> findLowestCostAccessibleSelection(const auto &costs,
         const auto selection = selectNodesByMask(instance, nodes, selectionMask).first;
         const size_t degree = instance.getClusterChildren(cluster).size();
         // Assume we have already processed the child nodes by topological sort
-        const Cost *cost = &costs.at({ cluster, selectionMask, degree, profitTarget });
+        const auto &cost = costs.at({ cluster, selectionMask, degree, profitTarget });
 
-        if (!lowestCost || cost->pageCount < lowestCost->pageCount) {
-            lowestCost = cost;
+        if (!lowestCost.has_value() || cost.pageCount < lowestCost->pageCount) {
+            lowestCost = std::move(cost);
         }
     }
-    return lowestCost == nullptr ? std::nullopt : std::make_optional<Cost>(*lowestCost);
+    return lowestCost;
 }
 
 static std::optional<Cost> findMostProfitableScenarioAtRoot(const auto &costs,
@@ -179,17 +179,17 @@ static std::optional<Cost> findMostProfitableScenarioAtRoot(const auto &costs,
     const size_t root = ClusterTreeInstance::getRootCluster();
     const size_t rootDegree = instance.getClusterChildren(root).size();
     size_t bestProfit = 0;
-    const Cost *bestCost = nullptr;
+    std::optional<Cost> bestProfitCost;
 
     for (auto &[key, value] : costs) {
         if (key.cluster == root && key.childCount == rootDegree && key.profitTarget > bestProfit &&
             value.pageCount <= instance.getCapacity()) {
             bestProfit = key.profitTarget;
-            bestCost = &value;
+            bestProfitCost = std::move(value);
         }
     }
 
-    return bestCost == nullptr ? std::nullopt : std::make_optional<Cost>(*bestCost);
+    return bestProfitCost;
 }
 
 Host maximiseOneHostByClusterTree(const ClusterTreeInstance &instance,
