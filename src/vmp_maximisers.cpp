@@ -201,7 +201,10 @@ Host maximiseOneHostByClusterTree(const ClusterTreeInstance &instance,
 
     // A simple upper bound is packing all the nodes
     // TODO other upper bounds?
-    const int maxProfit = static_cast<int>(instance.getLeafNodes().size());
+    size_t profitUpperBound = 0;
+    for (const auto profit : profits | std::views::values) {
+        profitUpperBound += profit;
+    }
 
     // Topological sort:
     // Track # of unvisited children of each cluster
@@ -246,7 +249,7 @@ Host maximiseOneHostByClusterTree(const ClusterTreeInstance &instance,
                 }
             }
 
-            for (size_t profitTarget = 0; profitTarget <= maxProfit; ++profitTarget) {
+            for (size_t profitTarget = 0; profitTarget <= profitUpperBound; ++profitTarget) {
                 // Initialise:
                 // cost[n, s, 0, p] = if (sum profit in s) >= p then |union pages in s| else +inf
                 ProfitScenario curKey{ cluster, curMask, 0, profitTarget };
