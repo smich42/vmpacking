@@ -83,7 +83,7 @@ calculateAllSubtreeLowerBounds(const TreeInstance &instance)
         const size_t weight = instance.getNodePages(node).size();
 
         const auto &children = instance.getNodeChildren(node);
-        for (const auto &child : children) {
+        for (const size_t child : children) {
             capacities[child] = capacities[node] - weight;
             topDownNodesToVisit.push(child);
         }
@@ -111,7 +111,7 @@ calculateAllSubtreeLowerBounds(const TreeInstance &instance)
         }
 
         size_t childrenTotalSize = 0;
-        for (const auto &child : instance.getNodeChildren(node)) {
+        for (const size_t child : instance.getNodeChildren(node)) {
             childrenTotalSize += res.at(child).size;
         }
 

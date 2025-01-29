@@ -200,12 +200,8 @@ Host maximiseOneHostByClusterTree(
                        decltype([](const ProfitScenario &k) { return k.hash(); })>
         costs;
 
-    // A simple upper bound is packing all the nodes
-    // TODO other upper bounds?
-    size_t profitUpperBound = 0;
-    for (const auto profit : profits | std::views::values) {
-        profitUpperBound += profit;
-    }
+    // The profit upper bound at each subtree is the sum of the profits of all its leaves
+    std::unordered_map<size_t, size_t> profitUpperBounds;
 
     // Topological sort:
     // Track # of unvisited children of each cluster
@@ -236,6 +232,16 @@ Host maximiseOneHostByClusterTree(
         const std::vector<size_t> &curNodes = instance.getClusterNodes(cluster);
         const auto &curChildren = instance.getClusterChildren(cluster);
 
+        if (instance.clusterIsLeaf(cluster)) {
+            const auto &guest = instance.getNodeGuest(curNodes.front());
+            profitUpperBounds[cluster] = profits.at(guest);
+        }
+        else {
+            for (const size_t child : curChildren) {
+                profitUpperBounds[cluster] += profitUpperBounds.at(child);
+            }
+        }
+
         assert(curNodes.size() < 64);
         // Begin by considering every one of 2^(node count) choices of nodes from this cluster
         for (uint64_t curMask = 0; curMask < 1ULL << curNodes.size(); ++curMask) {
@@ -249,9 +255,10 @@ Host maximiseOneHostByClusterTree(
                 }
             }
 
-            for (size_t profitTarget = 0; profitTarget <= profitUpperBound; ++profitTarget) {
+            for (size_t profitTarget = 0; profitTarget <= profitUpperBounds.at(cluster);
+                 ++profitTarget) {
                 // Initialise:
-                // cost[n, s, 0, p] = if (sum profit in s) >= p then |union pages in s| else +inf
+                // cost[n,s,0,p] = if (sum profit in s) >= p then |union pages in s| else +inf
                 ProfitScenario curKey{ cluster, curMask, 0, profitTarget };
                 if (curSelectionPages.size() > instance.getCapacity() ||
                     profitMade < profitTarget) {
@@ -268,11 +275,11 @@ Host maximiseOneHostByClusterTree(
                     // Try to do better than with j - 1 children
                     costs[curKey] = costs.at({ cluster, curMask, j - 1, profitTarget });
 
-                    // Only those nodes in the child cluster that have at least one parent in the
-                    // current selection are accessible, as the mask must be over all the cluster's
-                    // nodes
-                    // TODO: consider computing the subset of viable children first and generate all
-                    // of ITS subsets
+                    // Only those nodes in the child cluster that have at least one parent in
+                    // the current selection are accessible, as the mask must be over all the
+                    // cluster's nodes
+                    // TODO: consider computing the subset of viable children first and generate
+                    // all of ITS subsets
                     const size_t newChild = curChildren[j - 1];
                     const std::vector<size_t> &newChildNodes = instance.getClusterNodes(newChild);
                     const size_t accessibleChildrenMask =
@@ -280,7 +287,8 @@ Host maximiseOneHostByClusterTree(
 
                     // Try to make `profitComplement` profit from the newly considered child
                     // cluster
-                    for (size_t profitComplement = 0; profitComplement <= profitTarget;
+                    for (size_t profitComplement = 0;
+                         profitComplement <= std::min(profitTarget, profitUpperBounds.at(newChild));
                          ++profitComplement) {
                         const Cost bestChildCost =
                             findLowestCostAccessibleSelection(
