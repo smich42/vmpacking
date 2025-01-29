@@ -1,9 +1,9 @@
-#include <vmp_maximisers.h>
-
-#include <iostream>
 #include <vmp_generalinstanceloader.h>
+#include <vmp_maximisers.h>
 #include <vmp_packing.h>
 #include <vmp_solvers.h>
+
+#include <iostream>
 
 template <typename InstanceType>
     requires vmp::Instance<InstanceType>
@@ -88,7 +88,25 @@ void runClusterTree()
                         oneHostApprox, epsilon);
                 });
         },
-        "Local Search on Cluster Tree Maximiser", instance);
+        "Local Search on Cluster-Tree Maximiser", instance);
+}
+
+void runTree()
+{
+    vmp::TreeInstance instance(4, { 1, 2 });
+
+    const size_t nodeA = instance.addInner(vmp::TreeInstance::getRootNode(), { 3, 4 });
+    const size_t nodeB = instance.addInner(nodeA, { 5 });
+
+    const auto guest1 = std::make_shared<vmp::Guest>(std::unordered_set{ 1, 3, 5 });
+    const auto guest2 = std::make_shared<vmp::Guest>(std::unordered_set{ 2, 4, 6 });
+    const auto guest3 = std::make_shared<vmp::Guest>(std::unordered_set{ 3, 5, 7 });
+
+    const size_t leaf1 = instance.addLeaf(nodeA, guest1, { 3, 5 });
+    const size_t leaf2 = instance.addLeaf(nodeA, guest2, { 2, 4 });
+    const size_t leaf3 = instance.addLeaf(nodeB, guest3, { 3, 5, 7 });
+
+    runSolver<vmp::TreeInstance>(vmp::solveSimpleTree, "Tree Model", instance);
 }
 
 int main()
@@ -136,6 +154,7 @@ int main()
         "Local Search on Subset Value Maximiser", instance);
 
     runClusterTree();
+    runTree();
 
     return 0;
 }

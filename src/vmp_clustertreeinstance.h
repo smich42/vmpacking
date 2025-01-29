@@ -11,7 +11,8 @@ namespace vmp
 class ClusterTreeInstance
 {
   public:
-    size_t addInner(size_t cluster, const std::vector<size_t> &parents, const std::unordered_set<int> &pages);
+    size_t addInner(size_t cluster, const std::vector<size_t> &parents,
+                    const std::unordered_set<int> &pages);
     size_t addLeaf(const std::vector<size_t> &parents, const std::shared_ptr<const Guest> &guest,
                    const std::unordered_set<int> &pages);
 
@@ -73,6 +74,8 @@ class ClusterTreeInstance
             : parent(parent), nodes(nodes)
         {
         }
+
+        Cluster() = default;
     };
 
     [[nodiscard]] bool checkNodesAreInCluster(const std::vector<size_t> &nodes,

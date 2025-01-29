@@ -7,7 +7,8 @@ namespace vmp
 
 ClusterTreeInstance::ClusterTreeInstance(const size_t capacity) : capacity(capacity)
 {
-    this->clusters = { Cluster(ROOT_CLUSTER, {}) };
+    clusters = std::vector<Cluster>(ROOT_CLUSTER + 1);
+    clusters[ROOT_CLUSTER] = Cluster(ROOT_CLUSTER, {});
 }
 
 bool ClusterTreeInstance::checkNodesAreInCluster(const std::vector<size_t> &nodes,

@@ -87,7 +87,6 @@ calculateAllSubtreeLowerBounds(const TreeInstance &instance)
             capacities[child] = capacities[node] - weight;
             topDownNodesToVisit.push(child);
         }
-
         if ((unvisitedChildCounts[node] = children.size()) == 0) {
             bottomUpNodesToVisit.push(node);
         }
@@ -99,7 +98,7 @@ calculateAllSubtreeLowerBounds(const TreeInstance &instance)
         bottomUpNodesToVisit.pop();
 
         const size_t parent = instance.getNodeParent(node);
-        if (--unvisitedChildCounts[parent] == 0) {
+        if (node != TreeInstance::getRootNode() && --unvisitedChildCounts[parent] == 0) {
             bottomUpNodesToVisit.push(parent);
         }
 

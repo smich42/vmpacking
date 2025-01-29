@@ -1,57 +1,83 @@
 #include <vmp_treeinstance.h>
 
+#include <cassert>
+#include <stack>
+
 namespace vmp
 {
+
+TreeInstance::TreeInstance(const size_t capacity, const std::unordered_set<int> &rootPages)
+    : capacity(capacity)
+{
+    nodes = std::vector<std::optional<Node>>(ROOT_NODE + 1);
+    nodes[ROOT_NODE] =
+        Node(ROOT_NODE, rootPages, std::unordered_set<std::shared_ptr<const Guest>>{});
+}
 
 TreeInstance::TreeInstance(const size_t capacity, const std::unordered_set<int> &rootPages,
                            const std::shared_ptr<const Guest> &rootGuest)
     : capacity(capacity)
 {
-    nodes[ROOT_NODE] = Node(ROOT_NODE, rootPages, rootGuest);
+    nodes = std::vector<std::optional<Node>>(ROOT_NODE + 1);
+    nodes[ROOT_NODE] = Node(ROOT_NODE, rootPages, std::unordered_set{ rootGuest });
 }
 
 size_t TreeInstance::addInner(const size_t parent, const std::unordered_set<int> &pages)
 {
     const size_t newNode = nodes.size();
-    nodes.emplace_back(parent, pages, nullptr);
-    nodes[parent].children.push_back(newNode);
+    nodes.push_back(std::make_optional<Node>(parent, pages,
+                                             std::unordered_set<std::shared_ptr<const Guest>>{}));
+    nodes[parent]->children.push_back(newNode);
     return newNode;
 }
 
-size_t TreeInstance::addLeaf(const size_t parent, const std::shared_ptr<const Guest> &guest,
+size_t TreeInstance::addLeaf(size_t parent, const std::shared_ptr<const Guest> &guest,
                              const std::unordered_set<int> &pages)
 {
     const size_t newNode = nodes.size();
-    nodes.emplace_back(parent, pages, guest);
-    nodes[parent].children.push_back(newNode);
+    nodes.push_back(std::make_optional<Node>(parent, pages, std::unordered_set{ guest }));
     leaves.push_back(newNode);
+    nodes[parent]->children.push_back(newNode);
+
+    while (parent != ROOT_NODE) {
+        nodes[parent]->guests.insert(guest);
+        parent = nodes[parent]->parent;
+    }
+    nodes[ROOT_NODE]->guests.insert(guest);
 
     return newNode;
 }
 
 const std::vector<size_t> &TreeInstance::getNodeChildren(const size_t node) const
 {
-    return nodes[node].children;
+    return nodes[node]->children;
 }
 
 size_t TreeInstance::getNodeParent(const size_t node) const
 {
-    return nodes[node].parent;
+    return nodes[node]->parent;
 }
 
 const std::unordered_set<int> &TreeInstance::getNodePages(const size_t node) const
 {
-    return nodes[node].pages;
+    return nodes[node]->pages;
 }
 
-const std::shared_ptr<const Guest> &TreeInstance::getNodeGuest(const size_t node) const
+std::shared_ptr<const Guest> TreeInstance::getNodeGuest(const size_t node) const
 {
-    return nodes[node].guest;
+    assert(nodes[node]->guests.size() == 1);
+    return *nodes[node]->guests.begin();
+}
+
+const std::unordered_set<std::shared_ptr<const Guest>> &
+TreeInstance::getSubtreeGuests(const size_t root) const
+{
+    return nodes[root]->guests;
 }
 
 bool TreeInstance::nodeIsLeaf(const size_t node) const
 {
-    return nodes[node].guest != nullptr;
+    return nodes[node]->children.empty();
 }
 
 size_t TreeInstance::getNodeCount() const
@@ -64,20 +90,48 @@ size_t TreeInstance::getCapacity() const
     return capacity;
 }
 
-std::vector<std::shared_ptr<const Guest>> TreeInstance::getGuests() const
+const std::unordered_set<std::shared_ptr<const Guest>> &TreeInstance::getGuests() const
 {
-    std::vector<std::shared_ptr<const Guest>> guests;
-    guests.reserve(leaves.size());
-
-    for (const auto &leaf : leaves) {
-        guests.push_back(nodes[leaf].guest);
-    }
-    return guests;
+    return nodes[ROOT_NODE]->guests;
 }
 
 const std::vector<size_t> &TreeInstance::getLeaves() const
 {
     return leaves;
+}
+
+void TreeInstance::removeSubtree(const size_t root)
+{
+    std::stack<size_t> nodesToRemove;
+
+    for (size_t node = 0; node < nodes.size(); ++node) {
+        if (node == root) {
+            continue;
+        }
+        for (const auto &guest : nodes[root]->guests) {
+            nodes[node]->guests.erase(guest);
+        }
+    }
+
+    nodesToRemove.push(root);
+
+    while (!nodesToRemove.empty()) {
+        const size_t node = nodesToRemove.top();
+        nodesToRemove.pop();
+
+        for (size_t child : nodes[node]->children) {
+            nodesToRemove.push(child);
+        }
+
+        const size_t parent = nodes[node]->parent;
+        auto &parentChildren = nodes[parent]->children;
+        const auto it = std::ranges::find(parentChildren, node);
+        if (it != parentChildren.end()) {
+            parentChildren.erase(it);
+        }
+
+        nodes[node].reset();
+    }
 }
 
 size_t TreeInstance::getRootNode()

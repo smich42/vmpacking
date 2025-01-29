@@ -3,6 +3,7 @@
 #include <vmp_solverutils.h>
 #include <vmp_treeinstance.h>
 
+#include <cassert>
 #include <numeric>
 #include <ostream>
 
@@ -25,7 +26,7 @@ static void proceedByNextFit(size_t capacity, GuestIt guestsBegin, GuestIt guest
     for (; guestsBegin != guestsEnd; ++guestsBegin) {
         const auto &guest = *guestsBegin;
         if (hosts.empty() || !hosts.back()->accommodatesGuest(*guest)) {
-            hosts.emplace_back(std::make_shared<Host>(capacity));
+            hosts.push_back(std::make_shared<Host>(capacity));
         }
         hosts.back()->addGuest(guest);
     }
@@ -60,7 +61,7 @@ static void proceedByFirstFit(size_t capacity, GuestIt guestsBegin, GuestIt gues
         auto hostIter = std::ranges::find_if(
             hosts, [&](const auto &host) { return host->accommodatesGuest(*guest); });
         if (hostIter == hosts.end()) {
-            hosts.emplace_back(std::make_shared<Host>(capacity));
+            hosts.push_back(std::make_shared<Host>(capacity));
             hostIter = hosts.end() - 1;
         }
 
@@ -262,6 +263,65 @@ Packing solveByLocalityScore(const GeneralInstance &instance)
     return Packing(hosts);
 }
 
-Packing solveSimpleTree(const TreeInstance &instance) {}
+static void runSolveSimpleTree(TreeInstance &instance, std::vector<std::shared_ptr<Host>> &hosts)
+{
+    const auto lowerBounds = calculateAllSubtreeLowerBounds(instance);
+
+    if (lowerBounds.at(TreeInstance::getRootNode()).count == 1) {
+        const auto &guests = instance.getGuests();
+        if (guests.empty()) {
+            return;
+        }
+
+        Host host(instance.getCapacity());
+        for (const auto &guest : guests) {
+            host.addGuest(guest);
+        }
+
+        hosts.push_back(std::make_shared<Host>(host));
+        return;
+    }
+
+    size_t minNode = std::numeric_limits<size_t>::max();
+    size_t minNodeCount = std::numeric_limits<size_t>::max();
+
+    for (const auto &[node, bounds] : lowerBounds) {
+        if (bounds.count <= 1) {
+            continue;
+        }
+
+        const auto &children = instance.getNodeChildren(node);
+        if (!std::ranges::all_of(
+                children, [&](const size_t child) { return lowerBounds.at(child).count == 1; })) {
+            continue;
+        }
+
+        if (minNode == std::numeric_limits<size_t>::max() || bounds.count < minNodeCount) {
+            minNode = node;
+            minNodeCount = bounds.count;
+        }
+    }
+
+    assert(minNode != std::numeric_limits<size_t>::max());
+
+    const auto &guestsToPack = instance.getSubtreeGuests(minNode);
+    proceedByFirstFit(instance.getCapacity(), guestsToPack.begin(), guestsToPack.end(), hosts);
+
+    if (minNode == TreeInstance::getRootNode()) {
+        return;
+    }
+
+    instance.removeSubtree(minNode);
+    runSolveSimpleTree(instance, hosts);
+}
+
+Packing solveSimpleTree(const TreeInstance &instance)
+{
+    TreeInstance instanceCopy = instance;
+    std::vector<std::shared_ptr<Host>> hosts;
+    runSolveSimpleTree(instanceCopy, hosts);
+
+    return Packing(hosts);
+}
 
 }  // namespace vmp

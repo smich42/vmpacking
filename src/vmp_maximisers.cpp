@@ -3,7 +3,6 @@
 #include <vmp_clustertreeinstance.h>
 
 #include <cassert>
-#include <iostream>
 #include <queue>
 #include <unordered_set>
 
@@ -111,7 +110,7 @@ selectNodesByMask(const ClusterTreeInstance &instance, const std::vector<size_t>
     std::unordered_set<int> pages;
     std::vector<size_t> selection;
 
-    for (uint64_t i = 0; i < pool.size(); i++) {
+    for (uint64_t i = 0; i < pool.size(); ++i) {
         if (mask & 1ULL << i) {
             const auto &nodePages = instance.getNodePages(pool[i]);
             pages.insert(nodePages.begin(), nodePages.end());

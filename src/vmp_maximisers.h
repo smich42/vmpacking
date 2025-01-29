@@ -79,9 +79,10 @@ findMostEfficientSubset(const std::unordered_map<std::shared_ptr<const Guest>, i
  * Defaults to 1.
  * @return a host with the most valuable guests placed
  */
-Host maximiseOneHostBySubsetEfficiency(const GeneralInstance &instance,
-                                       const std::unordered_map<std::shared_ptr<const Guest>, int> &profits,
-                                       int initialSubsetSize = 1);
+Host maximiseOneHostBySubsetEfficiency(
+    const GeneralInstance &instance,
+    const std::unordered_map<std::shared_ptr<const Guest>, int> &profits,
+    int initialSubsetSize = 1);
 
 /**
  * Maximises the number of guests placed on a single host on the Cluster Tree
@@ -91,8 +92,9 @@ Host maximiseOneHostBySubsetEfficiency(const GeneralInstance &instance,
  * @param profits the profit acquired by packing each guest
  * @return the maximised host
  */
-Host maximiseOneHostByClusterTree(const ClusterTreeInstance &instance,
-                                  const std::unordered_map<std::shared_ptr<const Guest>, int> &profits);
+Host maximiseOneHostByClusterTree(
+    const ClusterTreeInstance &instance,
+    const std::unordered_map<std::shared_ptr<const Guest>, int> &profits);
 
 /**
  * Maximises the number of guests placed on `allowedHostCount` hosts by using a
@@ -109,11 +111,11 @@ Host maximiseOneHostByClusterTree(const ClusterTreeInstance &instance,
  */
 template <typename InstanceType>
     requires Instance<InstanceType>
-Packing
-maximiseByLocalSearch(const InstanceType &instance, const size_t allowedHostCount,
-                      Host (*oneHostMaximiser)(const InstanceType &,
-                                               const std::unordered_map<std::shared_ptr<const Guest>, int> &),
-                      const double oneHostApproxRatio, const double epsilon)
+Packing maximiseByLocalSearch(
+    const InstanceType &instance, const size_t allowedHostCount,
+    Host (*oneHostMaximiser)(const InstanceType &,
+                             const std::unordered_map<std::shared_ptr<const Guest>, int> &),
+    const double oneHostApproxRatio, const double epsilon)
 {
     const size_t guestCount = instance.getGuests().size();
     std::vector initialPlacements(guestCount, false);
@@ -145,7 +147,7 @@ maximiseByLocalSearch(const InstanceType &instance, const size_t allowedHostCoun
         size_t mostImprovableIndex = 0;
         std::shared_ptr<Host> mostImprovingCandidate;
 
-        for (size_t i = 0; i < hosts.size(); i++) {
+        for (size_t i = 0; i < hosts.size(); ++i) {
             std::unordered_map<std::shared_ptr<const Guest>, int> profits;
 
             for (const auto &guest : instance.getGuests()) {
