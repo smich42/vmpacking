@@ -25,7 +25,7 @@ bool Host::removeGuest(const std::shared_ptr<const Guest> &guest)
             pageFrequencies.erase(page);
         }
     }
-    // Erase the entry to avoid maintaining an unnecessary reference
+
     guests.erase(guest);
 
     return isOverfull();

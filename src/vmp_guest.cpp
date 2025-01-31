@@ -1,6 +1,5 @@
 #include <vmp_guest.h>
 
-#include <numeric>
 #include <ostream>
 #include <vmp_host.h>
 

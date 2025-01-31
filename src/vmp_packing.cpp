@@ -3,15 +3,22 @@
 namespace vmp
 {
 
-Packing::Packing(const std::vector<std::shared_ptr<Host>> &hosts) : hosts(hosts) {}
-
-size_t Packing::countGuests() const
+Packing::Packing(const std::vector<std::shared_ptr<Host>> &hosts) : guestCount(0)
 {
-    size_t count = 0;
     for (const auto &host : hosts) {
-        count += host->getGuestCount();
+        addHost(host);
     }
-    return count;
+}
+
+void Packing::addHost(const std::shared_ptr<Host> &host)
+{
+    hosts.push_back(host);
+    guestCount += host->getGuestCount();
+}
+
+size_t Packing::getGuestCount() const
+{
+    return guestCount;
 }
 
 size_t Packing::getHostCount() const

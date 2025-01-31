@@ -13,6 +13,11 @@ namespace vmp
  * Packs `[guestsBegin, guestsEnd)` sequentially by Next Fit, modifying a
  * partial hosts vector
  *
+ * O(G * P), where G is the guest count and P the maximum amount of pages on any one guest;
+ * as we go over every guest and try to pack it into the newest host
+ * and to check a guest can be accommodated on a host, we iterate over the guest's pages and check
+ * containment in and add to host in O(1)
+ *
  * @tparam GuestIt any iterator type over `std::shared_ptr<const Guest>`
  * @param capacity the fixed bin capacity
  * @param guestsBegin the start of guest range
@@ -44,6 +49,9 @@ Packing solveByNextFit(const GeneralInstance &instance)
 /**
  * Packs `[guestsBegin, guestsEnd)` sequentially by First Fit, modifying a
  * partial hosts vector
+ *
+ * O(G^2 * P), where G is the guest count and P the maximum amount of pages on any one guest;
+ * as we go over every host for every guest
  *
  * @tparam GuestIt any iterator type over `std::shared_ptr<const Guest>`
  * @param capacity the fixed bin capacity
@@ -82,6 +90,14 @@ Packing solveByFirstFit(const GeneralInstance &instance)
  * Packs `[guestsBegin, guestsEnd)` sequentially by "Best Fusion" of Grange, et
  * al. (2021), modifying a partial hosts vector
  *
+ * O(G^3 * P)
+ *
+ * as we do
+ * O(P) + O(G^2 * 2P) + partition_time + O(G^2 * partitions * (P + P*G/partitions))
+ * where
+ *  partition_time = O(G^2 * P)
+ *  partitions = O(1) or O(G) (including in the component case)
+ *
  * @tparam GuestIt any iterator type over `std::shared_ptr<const Guest>`
  * @param capacity the fixed bin capacity
  * @param guestsBegin the start of guest range
@@ -119,8 +135,6 @@ static void proceedByBestFusion(size_t capacity, GuestIt guestsBegin, GuestIt gu
         bestHost->addGuest(*guestsBegin);
     }
 
-    // TODO ordered set only provides quasi-deterministic behaviour; depends on
-    // raw pointer addresses
     using SetGuestIt = std::unordered_set<std::shared_ptr<const Guest>>::iterator;
     decantGuests<SetGuestIt>(hosts, makeOneGuestPartition<SetGuestIt>);
     decantGuests<SetGuestIt>(hosts, makeShareGraphComponentGuestPartitions<SetGuestIt>);
@@ -139,6 +153,11 @@ Packing solveByBestFusion(const GeneralInstance &instance)
 /**
  * Packs `[guestsBegin, guestsEnd)` sequentially by "Overload-and-Remove" of
  * Grange, et al. (2021), modifying a partial hosts vector
+ *
+ * O(G^3 * P)
+ *
+ * as we do O(P) + O(G * (G*P + G*(G*P + P))
+ *
  *
  * @tparam GuestIt any iterator type over `std::shared_ptr<const Guest>`
  * @param capacity the fixed bin capacity
@@ -263,6 +282,16 @@ Packing solveByLocalityScore(const GeneralInstance &instance)
     return Packing(hosts);
 }
 
+/*
+ * O((G^2 * P) + N^2), where N is the number of nodes in the tree (bounded above by G + total number
+ * of unique pages in the instance)
+ *
+ * as we have
+ * O(G^2 * P) for the sum of all the first-fits (each guest is packed exactly once)
+ * plus, in the worst case, each subtree we remove has size N / 2, so the loop runs O(N / 2) times
+ * and each subtree removal costs O(N / 2) and iterating over the subtree's nodes is O(2 * N/2),
+ * as each node is considered twice, once as a child, once as a parent
+ */
 static void runSolveSimpleTree(TreeInstance &instance, std::vector<std::shared_ptr<Host>> &hosts)
 {
     const auto lowerBounds = calculateAllSubtreeLowerBounds(instance);

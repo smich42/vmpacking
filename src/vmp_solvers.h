@@ -1,7 +1,6 @@
 #ifndef VMP_SOLVERS_H
 #define VMP_SOLVERS_H
 
-#include <vmp_clustertreeinstance.h>
 #include <vmp_generalinstance.h>
 #include <vmp_packing.h>
 
@@ -9,7 +8,7 @@ namespace vmp
 {
 
 /**
- * Solves an instance of VM-PACK by Next Fit
+ * Solves an instance of VM-PACK by Next Fit.
  *
  * @param instance the instance to solve
  * @return a valid packing
@@ -54,6 +53,8 @@ Packing solveByLocalityScore(const GeneralInstance &instance);
  * Solves an instance of VM-PACK by searching for the number of bins which will
  * yield a complete packing using the given maximisation algorithm.
  *
+ * O(log(G) * T_maximiser)
+ *
  * @param instance the instance to solve
  * @return a valid packing
  */
@@ -71,7 +72,7 @@ Packing solveByMaximiser(const InstanceType &instance,
         const size_t allowedHostCount = (minHosts + maxHosts) / 2;
         Packing candidate = maximiser(instance, allowedHostCount);
 
-        if (candidate.countGuests() == instance.getGuests().size()) {
+        if (candidate.getGuestCount() == instance.getGuests().size()) {
             bestPacking = std::make_shared<Packing>(std::move(candidate));
             maxHosts = allowedHostCount - 1;
         }
@@ -88,6 +89,9 @@ Packing solveByMaximiser(const InstanceType &instance,
 
 /**
  * Solves VM-PACK by the Sinderal, et al. (2011) greedy algorithm on the tree model.
+ *
+ * O((G^2 * P) + N^2), where G is the number of guests, P the maximum number of pages on one guest
+ * and N the number of nodes
  *
  * @param instance the instance to solve
  * @return a valid packing

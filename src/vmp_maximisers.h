@@ -1,11 +1,13 @@
 #ifndef VMP_MAXIMISERS_H
 #define VMP_MAXIMISERS_H
 
-#include <numeric>
-#include <ranges>
 #include <vmp_clustertreeinstance.h>
 #include <vmp_packing.h>
 #include <vmp_types.h>
+
+#include <cassert>
+#include <numeric>
+#include <ranges>
 
 namespace vmp
 {
@@ -25,6 +27,7 @@ findMostEfficientSubset(const std::unordered_map<std::shared_ptr<const Guest>, i
                         const Host &host, const int subsetSize)
 {
     // TODO: parameterise the value function?
+    // We do not use bitmask here as we expect to go over all guests
     std::vector<bool> selector(unplaced.size());
     std::fill(selector.end() - subsetSize, selector.end(), true);
 
@@ -88,6 +91,9 @@ Host maximiseOneHostBySubsetEfficiency(
  * Maximises the number of guests placed on a single host on the Cluster Tree
  * model. See Sinderal, et al. (2011).
  *
+ * O((C * 2^(2N) * profit_upper_bound^2 + P) * G), where G is the number of guests, C of
+ * clusters, N the maximum number of nodes in a cluster and P of pages on a guest
+ *
  * @param instance the instance to maximise
  * @param profits the profit acquired by packing each guest
  * @return the maximised host
@@ -100,6 +106,8 @@ Host maximiseOneHostByClusterTree(
  * Maximises the number of guests placed on `allowedHostCount` hosts by using a
  * single-host maximiser. See Fleischer, et al. (2006).
  *
+ * O(T_maximiser * allowedHostCount^2 * oneHostApproxRatio * log(1/epsilon) * G * P)
+ *
  * @param instance the instance to maximise
  * @param allowedHostCount the number of hosts to use
  * @param oneHostMaximiser the single-host maximiser to use
@@ -107,7 +115,7 @@ Host maximiseOneHostByClusterTree(
  * maximiser
  * @param epsilon the approximation factor from Fleischer, et al. (2006). The
  * resulting approximation factor is beta/(beta + 1) - epsilon.
- * @return
+ * @return a packing with at most `allowedHostCount` hosts
  */
 template <typename InstanceType>
     requires Instance<InstanceType>
@@ -118,18 +126,21 @@ Packing maximiseByLocalSearch(
     const double oneHostApproxRatio, const double epsilon)
 {
     const size_t guestCount = instance.getGuests().size();
-    std::vector initialPlacements(guestCount, false);
 
     std::vector<std::shared_ptr<Host>> hosts;
+    std::unordered_map<std::shared_ptr<const Guest>, std::shared_ptr<Host>> guestHosts;
+
     hosts.reserve(allowedHostCount);
 
     for (size_t i = 0; i < allowedHostCount; ++i) {
         const auto host = std::make_shared<Host>(instance.getCapacity());
 
         for (size_t j = 0; j < guestCount; ++j) {
-            if (!initialPlacements[j] && host->accommodatesGuest(*instance.getGuests()[j])) {
-                host->addGuest(instance.getGuests()[j]);
-                initialPlacements[j] = true;
+            const auto guest = instance.getGuests()[j];
+
+            if (!guestHosts.contains(guest) && host->accommodatesGuest(*guest)) {
+                host->addGuest(guest);
+                guestHosts.emplace(guest, host);
             }
         }
 
@@ -138,9 +149,8 @@ Packing maximiseByLocalSearch(
 
     // Fleischer, et al. iteration count for achieving
     // (oneHostApproxRatio/(oneHostApproxRatio + 1) + epsilon) approximation
-    const size_t iterations = std::abs(static_cast<int>(
-        std::ceil(1.0 / oneHostApproxRatio * static_cast<double>(allowedHostCount) *
-                  std::log(1.0 / epsilon))));
+    const size_t iterations = std::abs(static_cast<int>(std::ceil(
+        static_cast<double>(allowedHostCount) * std::log(1.0 / epsilon) / oneHostApproxRatio)));
 
     for (size_t iteration = 0; iteration < iterations; ++iteration) {
         int maxImprovement = 0;
@@ -152,11 +162,8 @@ Packing maximiseByLocalSearch(
 
             for (const auto &guest : instance.getGuests()) {
                 int value = 1;
-                for (const auto &host : hosts) {
-                    if (host != hosts[i] && host->hasGuest(guest)) {
-                        value = 0;
-                        break;
-                    }
+                if (guestHosts.contains(guest) && guestHosts.at(guest) != hosts[i]) {
+                    value = 0;
                 }
                 profits[guest] = value;
             }
@@ -182,10 +189,12 @@ Packing maximiseByLocalSearch(
                 continue;
             }
 
-            for (const auto &guest : hosts[mostImprovableIndex]->getGuests())
+            for (const auto &guest : hosts[mostImprovableIndex]->getGuests()) {
                 if (host->hasGuest(guest)) {
                     host->removeGuest(guest);
+                    guestHosts[guest] = host;
                 }
+            }
         }
     }
 

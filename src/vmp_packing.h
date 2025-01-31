@@ -50,10 +50,14 @@ class Packing
                                    [&](const auto &guest) { return placedGuests.contains(guest); });
     }
 
-    [[nodiscard]] size_t countGuests() const;
+    void addHost(const std::shared_ptr<Host> &host);
+
+    [[nodiscard]] size_t getGuestCount() const;
     [[nodiscard]] size_t getHostCount() const;
 
+  private:
     std::vector<std::shared_ptr<Host>> hosts;
+    size_t guestCount;
 };
 
 }  // namespace vmp

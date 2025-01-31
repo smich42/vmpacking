@@ -124,19 +124,24 @@ int main()
     runSolver(vmp::solveByOverloadAndRemove, "Overload and Remove", instance);
     runSolver(vmp::solveByLocalityScore, "Locality Score", instance);
 
-    runSingleHostMaximiser<vmp::GeneralInstance>(
+    constexpr double epsilon = 0.0001;    // Throwaway, base it on oneHostApprox
+    constexpr double oneHostApprox = 25;  // Throwaway, base it on clusterSize
+
+    runSolver<vmp::GeneralInstance>(
         [](const vmp::GeneralInstance &inst) {
-            std::unordered_map<std::shared_ptr<const vmp::Guest>, int> profits;
-            for (const auto &guest : inst.getGuests()) {
-                profits[guest] = 1;
-            }
-            return maximiseOneHostBySubsetEfficiency(inst, profits, 1);
+            return solveByMaximiser<vmp::GeneralInstance>(
+                inst, [](const auto &inst, const size_t hostCount) {
+                    return maximiseByLocalSearch<vmp::GeneralInstance>(
+                        inst, hostCount,
+                        [](const auto &inst, const auto &profits) {
+                            return maximiseOneHostBySubsetEfficiency(inst, profits, 1);
+                        },
+                        oneHostApprox, epsilon);
+                });
         },
-        "GSAVVM", instance);
+        "Local Search on GSAVVM", instance);
 
     constexpr int initialSubsetSize = 1;
-    constexpr double oneHostApprox = 25;  // Throwaway, base it on clusterSize
-    constexpr double epsilon = 0.0001;    // Throwaway, base it on oneHostApprox
 
     // Compose one host maximiser -> local search maximiser -> solver
     runSolver<vmp::GeneralInstance>(

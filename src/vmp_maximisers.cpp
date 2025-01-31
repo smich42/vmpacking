@@ -9,6 +9,13 @@
 namespace vmp
 {
 
+/*
+ * O((G/initialSubsetSize) * max(comb(G, 0..initialSubsetSize) * ) * P)
+ *
+ * As for each integer i < G we do comb(G - c_i, initialSubsetSize - c_i)
+ * where c_i <= c_i-1 and c_0 = initialSubsetSize
+ * but comb is not monotonic wrt c_i
+ */
 Host maximiseOneHostBySubsetEfficiency(
     const GeneralInstance &instance,
     const std::unordered_map<std::shared_ptr<const Guest>, int> &profits, int initialSubsetSize)
@@ -64,6 +71,7 @@ struct ProfitScenario
 struct Cost
 {
     size_t pageCount;
+    // TODO: avoid copying guests, instead reference other entries in the cost table and backtrack
     std::vector<std::shared_ptr<const Guest>> guests;
 
     Cost() : pageCount(std::numeric_limits<int>::max()) {}
