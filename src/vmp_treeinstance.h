@@ -1,9 +1,9 @@
 #ifndef VMP_TREEINSTANCE_H
 #define VMP_TREEINSTANCE_H
 
-#include <queue>
 #include <vmp_guest.h>
 
+#include <queue>
 #include <unordered_set>
 #include <vector>
 
@@ -12,6 +12,8 @@ namespace vmp
 
 class TreeInstance
 {
+    friend class TreeInstanceLoader;
+
   public:
     size_t addInner(size_t parent, const std::unordered_set<int> &pages);
     size_t addLeaf(size_t parent, const std::shared_ptr<const Guest> &guest,

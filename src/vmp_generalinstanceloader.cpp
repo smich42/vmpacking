@@ -15,35 +15,9 @@ GeneralInstanceLoader::GeneralInstanceLoader(std::string directory)
 {
 }
 
-void GeneralInstanceLoader::load(const int max_instances, const std::string &capacity_field_name,
-                                 const std::string &guests_field_name)
-{
-    namespace fs = std::filesystem;
-
-    for (const auto &entry : fs::directory_iterator(directory)) {
-        if (entry.path().extension() != ".json") {
-            continue;
-        }
-
-        std::ifstream file(entry.path());
-        assert(file.is_open());
-
-        for (const auto &instance_json : json::parse(file)) {
-            assert(instance_json.contains(capacity_field_name));
-            assert(instance_json.contains(guests_field_name));
-
-            capacityData.push_back(instance_json[capacity_field_name].get<int>());
-            guestData.push_back(
-                instance_json[guests_field_name].get<std::vector<std::vector<int>>>());
-
-            if (guestData.size() == max_instances) {
-                return;
-            }
-        }
-    }
-}
-
-std::vector<GeneralInstance> GeneralInstanceLoader::makeGeneralInstances() const
+static std::vector<GeneralInstance>
+makeInstances(const std::vector<int> &capacityData,
+              const std::vector<std::vector<std::vector<int>>> &guestData)
 {
     assert(capacityData.size() == guestData.size());
 
@@ -59,4 +33,42 @@ std::vector<GeneralInstance> GeneralInstanceLoader::makeGeneralInstances() const
 
     return instances;
 }
+
+std::vector<GeneralInstance> GeneralInstanceLoader::load(const int maxInstances,
+                                                         const std::string &capacityFieldName,
+                                                         const std::string &guestsFieldName) const
+{
+    namespace fs = std::filesystem;
+
+    std::vector<int> capacityData;
+    std::vector<std::vector<std::vector<int>>> guestData;
+
+    capacityData.reserve(maxInstances);
+    guestData.reserve(maxInstances);
+
+    for (const auto &entry : fs::directory_iterator(directory)) {
+        if (entry.path().extension() != ".json") {
+            continue;
+        }
+
+        std::ifstream file(entry.path());
+        assert(file.is_open());
+
+        for (const auto &instance_json : json::parse(file)) {
+            assert(instance_json.contains(capacityFieldName));
+            assert(instance_json.contains(guestsFieldName));
+
+            capacityData.push_back(instance_json[capacityFieldName].get<int>());
+            guestData.push_back(
+                instance_json[guestsFieldName].get<std::vector<std::vector<int>>>());
+
+            if (guestData.size() == maxInstances) {
+                return makeInstances(capacityData, guestData);
+            }
+        }
+    }
+
+    return makeInstances(capacityData, guestData);
+}
+
 }  // namespace vmp

@@ -329,10 +329,7 @@ Host maximiseOneHostByClusterTree(
         return host;
     }
 
-    for (const auto &guest : bestCost->guests) {
-        host.addGuest(guest);
-    }
-
+    host.addGuests(bestCost->guests.begin(), bestCost->guests.end());
     return host;
 }
 

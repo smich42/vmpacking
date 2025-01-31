@@ -12,8 +12,8 @@ class Guest
 {
   public:
     explicit Guest(const std::unordered_set<int> &pages);
-    [[nodiscard]] size_t getPageCount() const;
-    [[nodiscard]] size_t countPagesOn(const Host &host) const;
+    [[nodiscard]] size_t getUniquePageCount() const;
+    [[nodiscard]] size_t countUniquePagesOn(const Host &host) const;
 
     const std::unordered_set<int> pages;
 

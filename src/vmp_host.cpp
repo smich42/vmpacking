@@ -64,12 +64,12 @@ size_t Host::getUniquePageCount() const
 
 size_t Host::countPagesWithGuest(const Guest &guest) const
 {
-    return getUniquePageCount() + guest.getPageCount() - guest.countPagesOn(*this);
+    return getUniquePageCount() + guest.getUniquePageCount() - guest.countUniquePagesOn(*this);
 }
 
 size_t Host::countPagesNotOn(const Guest &guest) const
 {
-    return getUniquePageCount() - guest.countPagesOn(*this);
+    return getUniquePageCount() - guest.countUniquePagesOn(*this);
 }
 
 size_t Host::getGuestCount() const

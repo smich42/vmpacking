@@ -8,12 +8,12 @@ namespace vmp
 
 Guest::Guest(const std::unordered_set<int> &pages) : pages(pages) {}
 
-size_t Guest::getPageCount() const
+size_t Guest::getUniquePageCount() const
 {
     return pages.size();
 }
 
-size_t Guest::countPagesOn(const Host &host) const
+size_t Guest::countUniquePagesOn(const Host &host) const
 {
     return std::ranges::count_if(pages,
                                  [&](const int page) { return host.getPageFrequency(page); });
@@ -29,7 +29,7 @@ std::ostream &operator<<(std::ostream &os, const Guest &guest)
             os << ", " << *it;
         }
     }
-    os << "] (len=" << guest.getPageCount() << ") }";
+    os << "] (len=" << guest.getUniquePageCount() << ") }";
     return os;
 }
 

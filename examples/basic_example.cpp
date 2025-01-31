@@ -2,6 +2,7 @@
 #include <vmp_maximisers.h>
 #include <vmp_packing.h>
 #include <vmp_solvers.h>
+#include <vmp_treeinstanceloader.h>
 
 #include <iostream>
 
@@ -91,38 +92,19 @@ void runClusterTree()
         "Local Search on Cluster-Tree Maximiser", instance);
 }
 
-void runTree()
-{
-    vmp::TreeInstance instance(4, { 1, 2 });
-
-    const size_t nodeA = instance.addInner(vmp::TreeInstance::getRootNode(), { 3, 4 });
-    const size_t nodeB = instance.addInner(nodeA, { 5 });
-
-    const auto guest1 = std::make_shared<vmp::Guest>(std::unordered_set{ 1, 3, 5 });
-    const auto guest2 = std::make_shared<vmp::Guest>(std::unordered_set{ 2, 4, 6 });
-    const auto guest3 = std::make_shared<vmp::Guest>(std::unordered_set{ 3, 5, 7 });
-
-    const size_t leaf1 = instance.addLeaf(nodeA, guest1, { 3, 5 });
-    const size_t leaf2 = instance.addLeaf(nodeA, guest2, { 2, 4 });
-    const size_t leaf3 = instance.addLeaf(nodeB, guest3, { 3, 5, 7 });
-
-    runSolver<vmp::TreeInstance>(vmp::solveSimpleTree, "Tree Model", instance);
-}
-
 int main()
 {
-    vmp::GeneralInstanceLoader loader("../resource/gauss");
-    loader.load(1, "capacity", "tiles");
+    const vmp::GeneralInstanceLoader generalLoader("../resource/gauss");
+    const auto generalInstance = generalLoader.load(1, "capacity", "tiles").front();
 
-    const auto instance = loader.makeGeneralInstances().front();
+    const vmp::TreeInstanceLoader treeLoader("../resource");
+    const auto treeInstance = treeLoader.load(1).front();
 
-    std::cout << instance << std::endl;
-
-    runSolver(vmp::solveByNextFit, "Next Fit", instance);
-    runSolver(vmp::solveByFirstFit, "First Fit", instance);
-    runSolver(vmp::solveByBestFusion, "Best Fusion", instance);
-    runSolver(vmp::solveByOverloadAndRemove, "Overload and Remove", instance);
-    runSolver(vmp::solveByLocalityScore, "Locality Score", instance);
+    runSolver(vmp::solveByNextFit, "Next Fit", generalInstance);
+    runSolver(vmp::solveByFirstFit, "First Fit", generalInstance);
+    runSolver(vmp::solveByBestFusion, "Best Fusion", generalInstance);
+    runSolver(vmp::solveByOverloadAndRemove, "Overload and Remove", generalInstance);
+    runSolver(vmp::solveByLocalityScore, "Locality Score", generalInstance);
 
     constexpr double epsilon = 0.0001;    // Throwaway, base it on oneHostApprox
     constexpr double oneHostApprox = 25;  // Throwaway, base it on clusterSize
@@ -139,11 +121,10 @@ int main()
                         oneHostApprox, epsilon);
                 });
         },
-        "Local Search on GSAVVM", instance);
+        "Local Search on GSAVVM", generalInstance);
 
-    constexpr int initialSubsetSize = 1;
+    constexpr int initialSubsetSize = 1;  // This makes the below equivalent to GSAVVM
 
-    // Compose one host maximiser -> local search maximiser -> solver
     runSolver<vmp::GeneralInstance>(
         [](const vmp::GeneralInstance &inst) {
             return solveByMaximiser<vmp::GeneralInstance>(inst, [](const auto &inst,
@@ -156,10 +137,11 @@ int main()
                     oneHostApprox, epsilon);
             });
         },
-        "Local Search on Subset Value Maximiser", instance);
+        "Local Search on Subset Value Maximiser", generalInstance);
 
     runClusterTree();
-    runTree();
+
+    runSolver<vmp::TreeInstance>(vmp::solveSimpleTree, "Tree Model", treeInstance);
 
     return 0;
 }

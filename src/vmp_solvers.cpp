@@ -4,6 +4,7 @@
 #include <vmp_treeinstance.h>
 
 #include <cassert>
+#include <iostream>
 #include <numeric>
 #include <ostream>
 
@@ -113,7 +114,7 @@ static void proceedByBestFusion(size_t capacity, GuestIt guestsBegin, GuestIt gu
     for (; guestsBegin != guestsEnd; ++guestsBegin) {
         const auto &guest = *guestsBegin;
 
-        double bestRelSize = guest->getPageCount();
+        double bestRelSize = guest->getUniquePageCount();
         std::shared_ptr<Host> bestHost = nullptr;
 
         for (const auto &host : hosts) {
@@ -253,7 +254,7 @@ Packing solveByLocalityScore(const GeneralInstance &instance)
         double bestScore = std::numeric_limits<double>::min();
 
         for (const auto &guest : unplaced) {
-            if (!largestGuest || guest->getPageCount() > largestGuest->getPageCount()) {
+            if (!largestGuest || guest->getUniquePageCount() > largestGuest->getUniquePageCount()) {
                 largestGuest = guest;
             }
 
@@ -292,63 +293,61 @@ Packing solveByLocalityScore(const GeneralInstance &instance)
  * and each subtree removal costs O(N / 2) and iterating over the subtree's nodes is O(2 * N/2),
  * as each node is considered twice, once as a child, once as a parent
  */
-static void runSolveSimpleTree(TreeInstance &instance, std::vector<std::shared_ptr<Host>> &hosts)
-{
-    const auto lowerBounds = calculateAllSubtreeLowerBounds(instance);
-
-    if (lowerBounds.at(TreeInstance::getRootNode()).count == 1) {
-        const auto &guests = instance.getGuests();
-        if (guests.empty()) {
-            return;
-        }
-
-        Host host(instance.getCapacity());
-        for (const auto &guest : guests) {
-            host.addGuest(guest);
-        }
-
-        hosts.push_back(std::make_shared<Host>(host));
-        return;
-    }
-
-    size_t minNode = std::numeric_limits<size_t>::max();
-    size_t minNodeCount = std::numeric_limits<size_t>::max();
-
-    for (const auto &[node, bounds] : lowerBounds) {
-        if (bounds.count <= 1) {
-            continue;
-        }
-
-        const auto &children = instance.getNodeChildren(node);
-        if (!std::ranges::all_of(
-                children, [&](const size_t child) { return lowerBounds.at(child).count == 1; })) {
-            continue;
-        }
-
-        if (minNode == std::numeric_limits<size_t>::max() || bounds.count < minNodeCount) {
-            minNode = node;
-            minNodeCount = bounds.count;
-        }
-    }
-
-    assert(minNode != std::numeric_limits<size_t>::max());
-
-    const auto &guestsToPack = instance.getSubtreeGuests(minNode);
-    proceedByFirstFit(instance.getCapacity(), guestsToPack.begin(), guestsToPack.end(), hosts);
-
-    if (minNode == TreeInstance::getRootNode()) {
-        return;
-    }
-
-    instance.removeSubtree(minNode);
-    runSolveSimpleTree(instance, hosts);
-}
-
 Packing solveSimpleTree(const TreeInstance &instance)
 {
     TreeInstance instanceCopy = instance;
+
     std::vector<std::shared_ptr<Host>> hosts;
-    runSolveSimpleTree(instanceCopy, hosts);
+
+    while (true) {
+        const auto lowerBounds = calculateAllSubtreeLowerBounds(instanceCopy);
+
+        if (lowerBounds.at(TreeInstance::getRootNode()).count == 1) {
+            const auto &guests = instanceCopy.getGuests();
+            if (guests.empty()) {
+                break;
+            }
+
+            Host host(instanceCopy.getCapacity());
+            host.addGuests(guests.begin(), guests.end());
+
+            hosts.push_back(std::make_shared<Host>(host));
+            break;
+        }
+
+        size_t minNode = std::numeric_limits<size_t>::max();
+        size_t minNodeCount = std::numeric_limits<size_t>::max();
+
+        for (const auto &[node, bounds] : lowerBounds) {
+            if (bounds.count <= 1) {
+                continue;
+            }
+
+            const auto &children = instanceCopy.getNodeChildren(node);
+            if (!std::ranges::all_of(children, [&](const size_t child) {
+                    return lowerBounds.at(child).count == 1;
+                })) {
+                continue;
+            }
+
+            if (minNode == std::numeric_limits<size_t>::max() || bounds.count < minNodeCount) {
+                minNode = node;
+                minNodeCount = bounds.count;
+            }
+        }
+
+        assert(minNode != std::numeric_limits<size_t>::max());
+
+        const auto &guestsToPack = instanceCopy.getSubtreeGuests(minNode);
+        proceedByFirstFit(instanceCopy.getCapacity(), guestsToPack.begin(), guestsToPack.end(),
+                          hosts);
+
+        if (minNode == TreeInstance::getRootNode()) {
+            break;
+        }
+
+        instanceCopy.removeSubtree(minNode);
+    }
 
     return Packing(hosts);
 }

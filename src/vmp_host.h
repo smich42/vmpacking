@@ -104,6 +104,14 @@ class Host
 
     friend std::ostream &operator<<(std::ostream &os, const Host &host);
 
+    template <SharedPtrIterator<const Guest> GuestIt>
+    void addGuests(GuestIt guestsBegin, const GuestIt guestsEnd)
+    {
+        for (; guestsBegin != guestsEnd; ++guestsBegin) {
+            addGuest(*guestsBegin);
+        }
+    }
+
   private:
     // Store page frequencies as the number of guests that have a page is
     // useful some Grange heuristics

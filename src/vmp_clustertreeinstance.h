@@ -10,6 +10,8 @@ namespace vmp
 
 class ClusterTreeInstance
 {
+    friend class ClusterTreeInstanceLoader;
+
   public:
     size_t addInner(size_t cluster, const std::vector<size_t> &parents,
                     const std::unordered_set<int> &pages);
