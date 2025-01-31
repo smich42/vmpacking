@@ -77,7 +77,7 @@ class ClusterTreeInstance
         {
         }
 
-        Cluster() = default;
+        Cluster() : parent(ROOT_CLUSTER), nodes({}) {}
     };
 
     [[nodiscard]] bool checkNodesAreInCluster(const std::vector<size_t> &nodes,

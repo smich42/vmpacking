@@ -31,28 +31,27 @@ std::vector<TreeInstance> TreeInstanceLoader::load(int maxInstances,
     };
 
     std::function<void(TreeInstance &, size_t, const json &)> addChildren =
-        [&](TreeInstance &tree, const size_t parent, const json &nodeJson) {
-            for (const auto &child : nodeJson[childrenFieldName]) {
+        [&](auto &tree, const size_t parent, const json &nodeJson) {
+            for (const auto &childJson : nodeJson[childrenFieldName]) {
                 const std::unordered_set<int> childPages =
-                    child[pagesFieldName].get<std::unordered_set<int>>();
+                    childJson[pagesFieldName].get<std::unordered_set<int>>();
 
-                const size_t childId = child.contains(guestPagesFieldName)
+                const size_t child = childJson.contains(guestPagesFieldName)
+                                         ? tree.addLeaf(parent, parseGuest(childJson), childPages)
+                                         : tree.addInner(parent, childPages);
 
-                                           ? tree.addLeaf(parent, parseGuest(child), childPages)
-                                           : tree.addInner(parent, childPages);
-
-                if (child.contains(childrenFieldName)) {
-                    addChildren(tree, childId, child);
+                if (childJson.contains(childrenFieldName)) {
+                    addChildren(tree, child, childJson);
                 }
             }
         };
 
-    for (const auto &entry : fs::directory_iterator(directory)) {
-        if (entry.path().extension() != ".json") {
+    for (const auto &directoryEntry : fs::directory_iterator(directory)) {
+        if (directoryEntry.path().extension() != ".json") {
             continue;
         }
 
-        std::ifstream file(entry.path());
+        std::ifstream file(directoryEntry.path());
         assert(file.is_open());
 
         for (const auto &rootNodeJson : json::parse(file)) {

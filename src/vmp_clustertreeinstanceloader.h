@@ -14,9 +14,14 @@ class ClusterTreeInstanceLoader
     explicit ClusterTreeInstanceLoader(std::string directory);
 
     [[nodiscard]]
-    std::vector<ClusterTreeInstance> load(int max_instances = -1,
-                                          const std::string &capacity_field_name = "capacity",
-                                          const std::string &guests_field_name = "guests") const;
+    std::vector<ClusterTreeInstance>
+    load(int maxInstances = -1, const std::string &capacityFieldName = "capacity",
+         const std::string &nodesFieldName = "nodes",
+         const std::string &nodeIdFieldName = "node_id",
+         const std::string &nodeParentsFieldName = "node_parents",
+         const std::string &pagesFieldName = "node_pages",
+         const std::string &guestPagesFieldName = "guest_pages",
+         const std::string &clusterChildrenFieldName = "cluster_children") const;
 
     ~ClusterTreeInstanceLoader() = default;
 

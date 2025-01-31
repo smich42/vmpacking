@@ -46,12 +46,12 @@ std::vector<GeneralInstance> GeneralInstanceLoader::load(const int maxInstances,
     capacityData.reserve(maxInstances);
     guestData.reserve(maxInstances);
 
-    for (const auto &entry : fs::directory_iterator(directory)) {
-        if (entry.path().extension() != ".json") {
+    for (const auto &directoryEntry : fs::directory_iterator(directory)) {
+        if (directoryEntry.path().extension() != ".json") {
             continue;
         }
 
-        std::ifstream file(entry.path());
+        std::ifstream file(directoryEntry.path());
         assert(file.is_open());
 
         for (const auto &instance_json : json::parse(file)) {
