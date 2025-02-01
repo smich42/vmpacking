@@ -102,21 +102,21 @@ const std::vector<size_t> &TreeInstance::getLeaves() const
 
 void TreeInstance::removeSubtree(const size_t root)
 {
-    std::stack<size_t> nodesToRemove;
-
-    for (size_t node = 0; node < nodes.size(); ++node) {
-        if (node == root) {
+    const auto &guestsToRemove = nodes[root]->guests;
+    for (int node = 0; node < nodes.size(); ++node) {
+        if (node == root || !nodes[node].has_value()) {
             continue;
         }
-        for (const auto &guest : nodes[root]->guests) {
+        for (const auto &guest : guestsToRemove) {
             nodes[node]->guests.erase(guest);
         }
     }
 
+    std::queue<size_t> nodesToRemove;
     nodesToRemove.push(root);
 
     while (!nodesToRemove.empty()) {
-        const size_t node = nodesToRemove.top();
+        const size_t node = nodesToRemove.front();
         nodesToRemove.pop();
 
         for (size_t child : nodes[node]->children) {
