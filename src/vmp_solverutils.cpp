@@ -73,8 +73,9 @@ calculateAllSubtreeLowerBounds(const TreeInstance &instance)
     std::queue<size_t> topDownNodesToVisit;
 
     // To calculate capacities we must go top-down
-    topDownNodesToVisit.push(TreeInstance::getRootNode());
-    capacities[TreeInstance::getRootNode()] = instance.getCapacity();
+    const size_t root = TreeInstance::getRootNode();
+    topDownNodesToVisit.push(root);
+    capacities[root] = instance.getCapacity();
 
     while (!topDownNodesToVisit.empty()) {
         const size_t node = topDownNodesToVisit.front();
@@ -92,13 +93,13 @@ calculateAllSubtreeLowerBounds(const TreeInstance &instance)
         }
     }
 
-    // To calculate size and weight we must go bottom-up
+    // To calculate size and count we must go bottom-up
     while (!bottomUpNodesToVisit.empty()) {
         const size_t node = bottomUpNodesToVisit.front();
         bottomUpNodesToVisit.pop();
 
         const size_t parent = instance.getNodeParent(node);
-        if (node != TreeInstance::getRootNode() && --unvisitedChildCounts[parent] == 0) {
+        if (node != root && --unvisitedChildCounts[parent] == 0) {
             bottomUpNodesToVisit.push(parent);
         }
 

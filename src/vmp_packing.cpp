@@ -26,4 +26,9 @@ size_t Packing::getHostCount() const
     return hosts.size();
 }
 
+const std::vector<std::shared_ptr<Host>> &Packing::getHosts() const
+{
+    return hosts;
+}
+
 }  // namespace vmp

@@ -300,9 +300,7 @@ Packing solveBySimpleTree(const TreeInstance &instance)
 
     std::vector<std::shared_ptr<Host>> hosts;
 
-    int i = 0;
     while (true) {
-        ++i;
         const auto lowerBounds = calculateAllSubtreeLowerBounds(instanceCopy);
 
         if (lowerBounds.at(TreeInstance::getRootNode()).count == 1) {

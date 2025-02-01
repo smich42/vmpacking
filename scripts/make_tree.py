@@ -62,11 +62,11 @@ def main():
     max_node_degree = 4
 
     guest_pages = generate_guest_pages(page_count, guest_count)
+    capacity = max(*(len(pages) for pages in guest_pages.values()))
 
     tree = make_subtree(guest_pages, {guest: set() for guest in guest_pages.keys()}, min_node_degree,
                         max_node_degree)
 
-    capacity = max(*(len(pages) for pages in guest_pages.values()))
     tree["capacity"] = capacity
 
     print(json.dumps(tree, indent=2))

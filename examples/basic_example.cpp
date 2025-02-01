@@ -7,6 +7,32 @@
 
 #include <iostream>
 
+// template <typename InstanceType>
+//     requires vmp::Instance<InstanceType>
+// void runSingleHostMaximiser(vmp::Host (*maximiser)(const InstanceType &instance),
+//                             const std::string &name, const InstanceType &instance)
+// {
+//     std::vector<std::pair<std::shared_ptr<const vmp::Guest>, int>> guests;
+//     guests.reserve(instance.getGuestCount());
+//     for (const auto &guest : instance.getGuests()) {
+//         guests.emplace_back(guest, 1);
+//     }
+//
+//     const auto start = std::chrono::high_resolution_clock::now();
+//     const auto host = maximiser(instance);
+//
+//     const auto end = std::chrono::high_resolution_clock::now();
+//
+//     const double elapsed =
+//         static_cast<double>(
+//             std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()) /
+//         1000.0;
+//
+//     std::cout << "=== " << name << " ===" << std::endl;
+//     std::cout << "Elapsed: " << elapsed << " s\n";
+//     std::cout << "Result: " << host.getGuestCount() << " guests on host, " << std::endl;
+// }
+
 template <typename InstanceType>
     requires vmp::Instance<InstanceType>
 void runSolver(vmp::Packing (*solver)(const InstanceType &), const std::string &name,
@@ -24,34 +50,7 @@ void runSolver(vmp::Packing (*solver)(const InstanceType &), const std::string &
     std::cout << "=== " << name << " ===" << std::endl;
     std::cout << "Elapsed: " << elapsed << " s\n";
     std::cout << "Result: " << packing.getHostCount() << ", "
-              << (packing.validateForInstance(instance) ? "valid" : "invalid") << std::endl;
-}
-
-template <typename InstanceType>
-    requires vmp::Instance<InstanceType>
-void runSingleHostMaximiser(vmp::Host (*maximiser)(const InstanceType &instance),
-                            const std::string &name, const InstanceType &instance)
-{
-    std::vector<std::pair<std::shared_ptr<const vmp::Guest>, int>> guests;
-    guests.reserve(instance.getGuestCount());
-    for (const auto &guest : instance.getGuests()) {
-        guests.emplace_back(guest, 1);
-    }
-
-    const auto start = std::chrono::high_resolution_clock::now();
-    const auto host = maximiser(instance);
-
-    const auto end = std::chrono::high_resolution_clock::now();
-
-    const double elapsed =
-        static_cast<double>(
-            std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()) /
-        1000.0;
-
-    std::cout << "=== " << name << " ===" << std::endl;
-    std::cout << "Elapsed: " << elapsed << " s\n";
-    std::cout << "Result: " << host.getGuestCount() << " guests on host, "
-              << (!host.isOverfull() ? "valid" : "INVALID") << std::endl;
+              << packing.validateForInstance(instance) << std::endl;
 }
 
 int main()
