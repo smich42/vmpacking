@@ -71,54 +71,13 @@ int main()
     runSolver(vmp::solveByOverloadAndRemove, "Overload and Remove", generalInstance);
     runSolver(vmp::solveByLocalityScore, "Locality Score", generalInstance);
 
-    constexpr double epsilon = 0.0001;    // Throwaway, base it on oneHostApprox
-    constexpr double oneHostApprox = 25;  // Throwaway, base it on clusterSize
-
     runSolver<vmp::GeneralInstance>(
-        [](const vmp::GeneralInstance &inst) {
-            return solveByMaximiser<vmp::GeneralInstance>(
-                inst, [](const auto &inst, const size_t hostCount) {
-                    return maximiseByLocalSearch<vmp::GeneralInstance>(
-                        inst, hostCount,
-                        [](const auto &inst, const auto &profits) {
-                            return maximiseOneHostBySubsetEfficiency(inst, profits, 1);
-                        },
-                        oneHostApprox, epsilon);
-                });
-        },
+        [](const auto &instance) { return vmp::solveBySubsetEfficiency(instance, 1); },
         "Local Search on GSAVVM", generalInstance);
 
-    constexpr int initialSubsetSize = 1;  // This makes the below equivalent to GSAVVM
-
-    runSolver<vmp::GeneralInstance>(
-        [](const vmp::GeneralInstance &inst) {
-            return solveByMaximiser<vmp::GeneralInstance>(inst, [](const auto &inst,
-                                                                   const size_t hostCount) {
-                return maximiseByLocalSearch<vmp::GeneralInstance>(
-                    inst, hostCount,
-                    [](const auto &inst, const auto &profits) {
-                        return maximiseOneHostBySubsetEfficiency(inst, profits, initialSubsetSize);
-                    },
-                    oneHostApprox, epsilon);
-            });
-        },
-        "Local Search on Subset Value Maximiser", generalInstance);
-
-    runSolver<vmp::ClusterTreeInstance>(
-        [](const vmp::ClusterTreeInstance &inst) {
-            return solveByMaximiser<vmp::ClusterTreeInstance>(
-                inst, [](const auto &inst, const size_t hostCount) {
-                    return maximiseByLocalSearch<vmp::ClusterTreeInstance>(
-                        inst, hostCount,
-                        [](const auto &inst, const auto &profits) {
-                            return vmp::maximiseOneHostByClusterTree(inst, profits);
-                        },
-                        oneHostApprox, epsilon);
-                });
-        },
-        "Local Search on Cluster-Tree Maximiser", clusterTreeInstance);
-
-    runSolver<vmp::TreeInstance>(vmp::solveSimpleTree, "Tree Model", treeInstance);
+    runSolver(vmp::solveByClusterTree, "Local Search on Cluster-Tree Maximiser",
+              clusterTreeInstance);
+    runSolver(vmp::solveBySimpleTree, "Tree Model", treeInstance);
 
     return 0;
 }

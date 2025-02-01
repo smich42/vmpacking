@@ -56,12 +56,14 @@ Packing solveByLocalityScore(const GeneralInstance &instance);
  * O(log(G) * T_maximiser)
  *
  * @param instance the instance to solve
+ * @param maximiser the n-host maximiser
  * @return a valid packing
  */
 template <typename InstanceType>
     requires Instance<InstanceType>
-Packing solveByMaximiser(const InstanceType &instance,
-                         Packing (*maximiser)(const InstanceType &instance, size_t maxHosts))
+Packing solveByMaximiser(
+    const InstanceType &instance,
+    const std::function<Packing(const InstanceType &instance, size_t maxHosts)> &maximiser)
 {
     size_t minHosts = 0;
     size_t maxHosts = instance.getGuests().size() + 1;
@@ -96,7 +98,29 @@ Packing solveByMaximiser(const InstanceType &instance,
  * @param instance the instance to solve
  * @return a valid packing
  */
-Packing solveSimpleTree(const TreeInstance &instance);
+Packing solveBySimpleTree(const TreeInstance &instance);
+
+/**
+ * Solves the instance by reduction to the n-host maximisation problem, then approximate reduction
+ * to the 1-host maximisation problem, which is approximated by Li, et al. (2009), or Rampersaud &
+ * Grosu (2014) if initialSubsetSize = 1
+ *
+ * @param instance the instance to solve
+ * @param initialSubsetSize place guests by computing the efficiency of each possible guest subset
+ * of this size
+ * @return a valid packing
+ */
+Packing solveBySubsetEfficiency(const GeneralInstance &instance, int initialSubsetSize);
+
+/**
+ * Solves the instance by reduction to the n-host maximisation problem, then approximate reduction
+ * to the 1-host maximisation problem, which is approximated by the Sinderal, et al. (2011) DP
+ * algorithm on the cluster-tree model
+ *
+ * @param instance the instance to solve
+ * @return a valid packing
+ */
+Packing solveByClusterTree(const ClusterTreeInstance &instance);
 
 }  // namespace vmp
 

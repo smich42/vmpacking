@@ -1,5 +1,6 @@
 #include <vmp_solvers.h>
 
+#include <vmp_maximisers.h>
 #include <vmp_solverutils.h>
 #include <vmp_treeinstance.h>
 
@@ -293,7 +294,7 @@ Packing solveByLocalityScore(const GeneralInstance &instance)
  * and each subtree removal costs O(N / 2) and iterating over the subtree's nodes is O(2 * N/2),
  * as each node is considered twice, once as a child, once as a parent
  */
-Packing solveSimpleTree(const TreeInstance &instance)
+Packing solveBySimpleTree(const TreeInstance &instance)
 {
     TreeInstance instanceCopy = instance;
 
@@ -350,6 +351,44 @@ Packing solveSimpleTree(const TreeInstance &instance)
     }
 
     return Packing(hosts);
+}
+
+Packing solveBySubsetEfficiency(const GeneralInstance &instance, int initialSubsetSize)
+{
+    const double epsilon = 0.0001;    // TODO
+    const double oneHostApprox = 25;  // TODO
+
+    auto oneHostMaximiser =
+        [&](const GeneralInstance &inst,
+            const std::unordered_map<std::shared_ptr<const Guest>, int> &profits) {
+            return maximiseOneHostBySubsetEfficiency(inst, profits, initialSubsetSize);
+        };
+
+    auto nHostMaximiser = [&](const GeneralInstance &inst, const size_t maxHosts) {
+        return maximiseByLocalSearch<GeneralInstance>(inst, maxHosts, oneHostMaximiser,
+                                                      oneHostApprox, epsilon);
+    };
+
+    return solveByMaximiser<GeneralInstance>(instance, nHostMaximiser);
+}
+
+Packing solveByClusterTree(const ClusterTreeInstance &instance)
+{
+    const double epsilon = 0.0001;    // TODO
+    const double oneHostApprox = 25;  // TODO
+
+    auto oneHostMaximiser =
+        [&](const ClusterTreeInstance &inst,
+            const std::unordered_map<std::shared_ptr<const Guest>, int> &profits) {
+            return maximiseOneHostByClusterTree(inst, profits);
+        };
+
+    auto nHostMaximiser = [&](const ClusterTreeInstance &inst, const size_t maxHosts) {
+        return maximiseByLocalSearch<ClusterTreeInstance>(inst, maxHosts, oneHostMaximiser,
+                                                          oneHostApprox, epsilon);
+    };
+
+    return solveByMaximiser<ClusterTreeInstance>(instance, nHostMaximiser);
 }
 
 }  // namespace vmp

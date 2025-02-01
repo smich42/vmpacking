@@ -73,7 +73,7 @@ findMostEfficientSubset(const std::unordered_map<std::shared_ptr<const Guest>, i
 /**
  * Places guests on a single host by always picking the next most valuable set
  * based on the reward and page sharing. See Li, et al. (2009) and Rampersaud &
- * Grosu (2014).
+ * Grosu (2014), who proposed a similar algorithm with initialSubsetSize = 1.
  *
  * @param instance the instance to maximise
  * @param profits the profit acquired by packing each guest
@@ -121,8 +121,9 @@ template <typename InstanceType>
     requires Instance<InstanceType>
 Packing maximiseByLocalSearch(
     const InstanceType &instance, const size_t allowedHostCount,
-    Host (*oneHostMaximiser)(const InstanceType &,
-                             const std::unordered_map<std::shared_ptr<const Guest>, int> &),
+    const std::function<Host(const InstanceType &,
+                             const std::unordered_map<std::shared_ptr<const Guest>, int> &)>
+        &oneHostMaximiser,
     const double oneHostApproxRatio, const double epsilon)
 {
     const size_t guestCount = instance.getGuests().size();

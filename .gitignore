@@ -1,6 +1,8 @@
 resource
 cmake-build-debug
-.vscode
-.idea
-include
+cmake-build-release
+.vscode/
+.idea/
+include/
 .DS_Store
+**/.venv/
