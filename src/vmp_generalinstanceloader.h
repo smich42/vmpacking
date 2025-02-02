@@ -11,16 +11,19 @@ namespace vmp
 class GeneralInstanceLoader
 {
   public:
-    explicit GeneralInstanceLoader(std::string directory);
+    explicit GeneralInstanceLoader(std::string directory,
+                                   std::string capacityFieldName = "capacity",
+                                   std::string guestsFieldName = "guests");
 
-    [[nodiscard]] std::vector<GeneralInstance>
-    load(int maxInstances = -1, const std::string &capacityFieldName = "capacity",
-         const std::string &guestsFieldName = "guests") const;
+    [[nodiscard]] std::vector<GeneralInstance> load(int maxInstances = -1) const;
 
     ~GeneralInstanceLoader() = default;
 
   private:
     const std::string directory;
+
+    const std::string capacityFieldName;
+    const std::string guestsFieldName;
 };
 
 }  // namespace vmp

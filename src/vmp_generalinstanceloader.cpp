@@ -10,8 +10,11 @@ using json = nlohmann::json;
 namespace vmp
 {
 
-GeneralInstanceLoader::GeneralInstanceLoader(std::string directory)
-    : directory(std::move(directory))
+GeneralInstanceLoader::GeneralInstanceLoader(std::string directory, std::string capacityFieldName,
+                                             std::string guestsFieldName)
+    : directory(std::move(directory)),
+      capacityFieldName(std::move(capacityFieldName)),
+      guestsFieldName(std::move(guestsFieldName))
 {
 }
 
@@ -34,9 +37,7 @@ makeInstances(const std::vector<int> &capacityData,
     return instances;
 }
 
-std::vector<GeneralInstance> GeneralInstanceLoader::load(const int maxInstances,
-                                                         const std::string &capacityFieldName,
-                                                         const std::string &guestsFieldName) const
+std::vector<GeneralInstance> GeneralInstanceLoader::load(const int maxInstances) const
 {
     namespace fs = std::filesystem;
 

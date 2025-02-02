@@ -55,8 +55,7 @@ def make_subtree(guest_unplaced_pages: dict[int, set[int]], guest_ancestor_pages
 def main():
     random.seed(10)
 
-    guest_pages = generate_guest_pages(page_count=40, guest_count=40
-                                       )
+    guest_pages = generate_guest_pages(page_count=40, guest_count=40)
     capacity = max(*(len(pages) for pages in guest_pages.values()))
 
     tree = make_subtree(guest_pages, {guest: set() for guest in guest_pages.keys()},
