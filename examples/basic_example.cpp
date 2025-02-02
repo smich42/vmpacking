@@ -74,6 +74,10 @@ int main()
         [](const auto &instance) { return vmp::solveBySubsetEfficiency(instance, 1); },
         "Local Search on GSAVVM", generalInstance);
 
+    runSolver<vmp::GeneralInstance>(
+        [](const auto &instance) { return vmp::solveBySubsetEfficiency(instance, 2); },
+        "Local Search by Subset Efficiency", generalInstance);
+
     runSolver(vmp::solveByClusterTree, "Local Search on Cluster-Tree Maximiser",
               clusterTreeInstance);
     runSolver(vmp::solveBySimpleTree, "Tree Model", treeInstance);

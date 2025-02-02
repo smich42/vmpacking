@@ -10,7 +10,7 @@ namespace vmp
 {
 
 /*
- * O((G/initialSubsetSize) * max(comb(G, 0..initialSubsetSize) * ) * P)
+ * O((G/initialSubsetSize) * max(comb(G, 0..initialSubsetSize)) * G * P)
  *
  * As for each integer i < G we do comb(G - c_i, initialSubsetSize - c_i)
  * where c_i <= c_i-1 and c_0 = initialSubsetSize
@@ -26,8 +26,7 @@ Host maximiseOneHostBySubsetEfficiency(
     while (true) {
         auto bestGuestSet = findMostEfficientSubset(unplaced, host, initialSubsetSize);
 
-        while (!bestGuestSet.has_value() && initialSubsetSize > 0) {
-            --initialSubsetSize;
+        while (!bestGuestSet.has_value() && --initialSubsetSize > 0) {
             bestGuestSet = findMostEfficientSubset(unplaced, host, initialSubsetSize);
         }
 

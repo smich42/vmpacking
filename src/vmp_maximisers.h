@@ -77,8 +77,10 @@ findMostEfficientSubset(const std::unordered_map<std::shared_ptr<const Guest>, i
  *
  * @param instance the instance to maximise
  * @param profits the profit acquired by packing each guest
- * @param initialSubsetSize the initial subset size to try. Note that the
- * algorithm is little-o(n^subsetSize) where n is the number of guests.
+ * @param initialSubsetSize the initial subset size to try.
+ *
+ * O(max(comb(G, 0..initialSubsetSize)) * G^2 * P)
+ *
  * Defaults to 1.
  * @return a host with the most valuable guests placed
  */
