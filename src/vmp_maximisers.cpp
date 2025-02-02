@@ -262,7 +262,7 @@ Host maximiseOneHostByClusterTree(
                 }
             }
 
-            for (size_t profitTarget = 0; profitTarget <= profitUpperBounds.at(cluster);
+            for (size_t profitTarget = 0; profitTarget <= profitUpperBounds[cluster];
                  ++profitTarget) {
                 // Initialise:
                 // cost[n,s,0,p] = if (sum profit in s) >= p then |union pages in s| else +inf

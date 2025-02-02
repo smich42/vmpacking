@@ -55,8 +55,8 @@ void runSolver(vmp::Packing (*solver)(const InstanceType &), const std::string &
 
 int main()
 {
-    const vmp::GeneralInstanceLoader generalLoader("../resource/gauss");
-    const auto generalInstance = generalLoader.load(1, "capacity", "tiles").front();
+    const vmp::GeneralInstanceLoader generalLoader("../resource/general");
+    const auto generalInstance = generalLoader.load(1).front();
 
     const vmp::TreeInstanceLoader treeLoader("../resource/tree");
     const auto treeInstance = treeLoader.load(1).front();

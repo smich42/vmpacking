@@ -3,7 +3,7 @@ import random
 from typing import Any
 
 
-def generate_guest_pages(page_count, guest_count):
+def generate_guest_pages(page_count: int, guest_count: int) -> dict[int, set[int]]:
     guest_pages = {i: set() for i in range(guest_count)}
 
     for page in range(page_count):
@@ -16,9 +16,6 @@ def generate_guest_pages(page_count, guest_count):
 
 def make_subtree(guest_unplaced_pages: dict[int, set[int]], guest_ancestor_pages: dict[int, set[int]],
                  min_node_degree: int, max_node_degree: int) -> dict[str, Any]:
-    if not guest_unplaced_pages:
-        return {"pages": [], "children": []}
-
     if len(guest_unplaced_pages) == 1:
         guest = next(iter(guest_unplaced_pages))
         return {
@@ -56,16 +53,14 @@ def make_subtree(guest_unplaced_pages: dict[int, set[int]], guest_ancestor_pages
 
 
 def main():
-    page_count = 40
-    guest_count = 40
-    min_node_degree = 2
-    max_node_degree = 4
+    random.seed(10)
 
-    guest_pages = generate_guest_pages(page_count, guest_count)
+    guest_pages = generate_guest_pages(page_count=40, guest_count=40
+                                       )
     capacity = max(*(len(pages) for pages in guest_pages.values()))
 
-    tree = make_subtree(guest_pages, {guest: set() for guest in guest_pages.keys()}, min_node_degree,
-                        max_node_degree)
+    tree = make_subtree(guest_pages, {guest: set() for guest in guest_pages.keys()},
+                        min_node_degree=2, max_node_degree=4)
 
     tree["capacity"] = capacity
 
