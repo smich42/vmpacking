@@ -26,7 +26,6 @@ static std::optional<std::vector<std::pair<std::shared_ptr<const Guest>, int>>>
 findMostEfficientSubset(const std::unordered_map<std::shared_ptr<const Guest>, int> &unplaced,
                         const Host &host, const int subsetSize)
 {
-    // TODO: parameterise the value function?
     // We do not use bitmask here as we expect to go over all guests
     std::vector<bool> selector(unplaced.size());
     std::fill(selector.end() - subsetSize, selector.end(), true);

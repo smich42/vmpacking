@@ -110,37 +110,38 @@ inline bool guestsHaveSharedPage(const Guest &guest1, const Guest &guest2)
 }
 
 template <SharedPtrIterator<const Guest> GuestIt>
-static std::vector<std::shared_ptr<const Guest>>
-shareGraphDFS(GuestIt cur, GuestIt guestsEnd,
-              std::unordered_set<std::shared_ptr<const Guest>> &visited)
-{
-    std::vector<std::shared_ptr<const Guest>> component;
-    visited.insert(*cur);
-    component.push_back(*cur);
-
-    for (auto it = cur; it != guestsEnd; ++it) {
-        if (!visited.contains(*it) && guestsHaveSharedPage(**cur, **it)) {
-            // TODO could make this iterative
-            shareGraphDFS(it, guestsEnd, visited);
-        }
-    }
-
-    return component;
-}
-
-template <SharedPtrIterator<const Guest> GuestIt>
 std::vector<std::vector<std::shared_ptr<const Guest>>>
 makeShareGraphComponentGuestPartitions(GuestIt guestsBegin, GuestIt guestsEnd)
 {
     std::vector<std::vector<std::shared_ptr<const Guest>>> result;
-    std::unordered_set<std::shared_ptr<const Guest>> visited;
+    std::unordered_set<std::shared_ptr<const Guest>> guestsVisited;
 
     for (; guestsBegin != guestsEnd; ++guestsBegin) {
-        if (visited.contains(*guestsBegin)) {
+        if (guestsVisited.contains(*guestsBegin)) {
             continue;
         }
 
-        const auto component = shareGraphDFS(guestsBegin, guestsEnd, visited);
+        std::vector<std::shared_ptr<const Guest>> component;
+        std::queue<std::shared_ptr<const Guest>> guestsToVisit;
+        guestsToVisit.push(*guestsBegin);
+
+        while (!guestsToVisit.empty()) {
+            const auto guest = guestsToVisit.front();
+            guestsToVisit.pop();
+
+            component.push_back(guest);
+            guestsVisited.insert(guest);
+
+            for (auto it = std::next(guestsBegin); it != guestsEnd; ++it) {
+                const auto childCandidate = *it;
+
+                if (!guestsVisited.contains(childCandidate) &&
+                    guestsHaveSharedPage(*childCandidate, *guest)) {
+                    guestsToVisit.push(childCandidate);
+                }
+            }
+        }
+
         result.push_back(std::move(component));
     }
 
