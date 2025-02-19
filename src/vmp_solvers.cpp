@@ -355,8 +355,16 @@ Packing solveBySimpleTree(const TreeInstance &instance)
 
 Packing solveBySubsetEfficiency(const GeneralInstance &instance, int initialSubsetSize)
 {
-    const double epsilon = 0.0001;    // TODO
-    const double oneHostApprox = 25;  // TODO
+    const double epsilon = 0.0001;
+    const auto &smallestGuest = *std::min_element(
+        instance.getGuests().begin(), instance.getGuests().end(),
+        [](auto &a, auto &b) { return a->getUniquePageCount() < b->getUniquePageCount(); });
+
+    const double oneHostApprox =
+        std::min(static_cast<double>(instance.getGuestCount()),
+                 static_cast<double>(instance.getCapacity()) /
+                     static_cast<double>(smallestGuest->getUniquePageCount())) /
+        static_cast<double>(initialSubsetSize);
 
     auto oneHostMaximiser =
         [&](const GeneralInstance &inst,
@@ -374,8 +382,9 @@ Packing solveBySubsetEfficiency(const GeneralInstance &instance, int initialSubs
 
 Packing solveByClusterTree(const ClusterTreeInstance &instance)
 {
-    const double epsilon = 0.0001;    // TODO
-    const double oneHostApprox = 25;  // TODO
+    // O(log n)-approx
+    const double epsilon = 0.0001;
+    const double oneHostApprox = std::log2(instance.getNodeCount());
 
     auto oneHostMaximiser =
         [&](const ClusterTreeInstance &inst,

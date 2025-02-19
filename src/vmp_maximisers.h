@@ -6,6 +6,7 @@
 #include <vmp_types.h>
 
 #include <cassert>
+#include <iostream>
 #include <numeric>
 #include <ranges>
 
@@ -115,7 +116,7 @@ Host maximiseOneHostByClusterTree(
  * @param oneHostApproxRatio the approximation ratio of the single-host
  * maximiser
  * @param epsilon the approximation factor from Fleischer, et al. (2006). The
- * resulting approximation factor is beta/(beta + 1) - epsilon.
+ * resulting approximation factor is oneHostApproxRatio/(oneHostApproxRatio + 1) - epsilon.
  * @return a packing with at most `allowedHostCount` hosts
  */
 template <typename InstanceType>
@@ -153,6 +154,8 @@ Packing maximiseByLocalSearch(
     // (oneHostApproxRatio/(oneHostApproxRatio + 1) + epsilon) approximation
     const size_t iterations = std::abs(static_cast<int>(std::ceil(
         static_cast<double>(allowedHostCount) * std::log(1.0 / epsilon) / oneHostApproxRatio)));
+
+    std::cout << "iterations: " << iterations << std::endl;
 
     for (size_t iteration = 0; iteration < iterations; ++iteration) {
         int maxImprovement = 0;
