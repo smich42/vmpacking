@@ -13,7 +13,7 @@ class TreeInstanceLoader
 {
   public:
     explicit TreeInstanceLoader(std::string directory, std::string capacityFieldName = "capacity",
-                                std::string guestPagesFieldName = "guestPages",
+                                std::string guestPagesFieldName = "guest_pages",
                                 std::string pagesFieldName = "pages",
                                 std::string childrenFieldName = "children");
 

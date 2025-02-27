@@ -20,7 +20,7 @@ def make_subtree(guest_unplaced_pages: dict[int, set[int]], guest_ancestor_pages
         guest = next(iter(guest_unplaced_pages))
         return {
             "pages": list(guest_unplaced_pages[guest] - guest_ancestor_pages[guest]),
-            "guestPages": list(guest_ancestor_pages[guest] | guest_unplaced_pages[guest])
+            "guest_pages": list(guest_ancestor_pages[guest] | guest_unplaced_pages[guest])
         }
 
     shared_pages = set.intersection(*guest_unplaced_pages.values()) if guest_unplaced_pages else set()
