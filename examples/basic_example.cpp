@@ -55,8 +55,9 @@ void runSolver(vmp::Packing (*solver)(const InstanceType &), const std::string &
 
 int main()
 {
-    const vmp::GeneralInstanceLoader generalLoader("../resource/general");
-    const auto generalInstance = generalLoader.load(1).front();
+    const vmp::GeneralInstanceLoader generalLoader(
+        "/Users/stavros/Documents/CS4099/data/general-instances");
+    const auto generalInstance = generalLoader.load(6)[3];
 
     const vmp::TreeInstanceLoader treeLoader("../resource/tree");
     const auto treeInstance = treeLoader.load(1).front();
@@ -78,8 +79,9 @@ int main()
     //     [](const auto &instance) { return vmp::solveBySubsetEfficiency(instance, 2); },
     //     "Local Search by Subset Efficiency", generalInstance);
 
-    runSolver(vmp::solveByClusterTree, "Local Search on Cluster-Tree Maximiser",
-              clusterTreeInstance);
+    runSolver<vmp::ClusterTreeInstance>(
+        [](const auto &instance) { return vmp::solveByClusterTree(instance); },
+        "Local Search on Cluster-Tree Maximiser", clusterTreeInstance);
     runSolver(vmp::solveBySimpleTree, "Tree Model", treeInstance);
 
     return 0;

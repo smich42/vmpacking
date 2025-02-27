@@ -23,9 +23,9 @@ Host maximiseOneHostBySubsetEfficiency(
     Host host(instance.getCapacity());
     std::unordered_map<std::shared_ptr<const Guest>, int> unplaced = profits;
 
-    while (true) {
+    while (!unplaced.empty()) {
         auto bestGuestSet = findMostEfficientSubset(unplaced, host, initialSubsetSize);
-
+        // Try to reduce the subset size until we find a subset that can be accommodated
         while (!bestGuestSet.has_value() && --initialSubsetSize > 0) {
             bestGuestSet = findMostEfficientSubset(unplaced, host, initialSubsetSize);
         }

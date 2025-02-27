@@ -155,8 +155,6 @@ Packing maximiseByLocalSearch(
     const size_t iterations = std::abs(static_cast<int>(std::ceil(
         static_cast<double>(allowedHostCount) * std::log(1.0 / epsilon) / oneHostApproxRatio)));
 
-    std::cout << "iterations: " << iterations << std::endl;
-
     for (size_t iteration = 0; iteration < iterations; ++iteration) {
         int maxImprovement = 0;
         size_t mostImprovableIndex = 0;
