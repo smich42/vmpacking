@@ -37,31 +37,46 @@ makeInstances(const std::vector<int> &capacityData,
     return instances;
 }
 
-std::vector<GeneralInstance> GeneralInstanceLoader::load(const int maxInstances) const
+std::vector<GeneralInstance> GeneralInstanceLoader::load(const int maxInstances)
 {
     namespace fs = std::filesystem;
 
+    std::vector<GeneralInstance> instances;
     std::vector<int> capacityData;
     std::vector<std::vector<std::vector<int>>> guestData;
 
+    instances.reserve(maxInstances);
     capacityData.reserve(maxInstances);
     guestData.reserve(maxInstances);
 
     for (const auto &directoryEntry : fs::directory_iterator(directory)) {
-        if (directoryEntry.path().extension() != ".json") {
-            continue;
+        if (directoryEntry.path().extension() == ".json") {
+            paths.emplace(directoryEntry);
         }
+    }
 
-        std::ifstream file(directoryEntry.path());
+    while (!paths.empty()) {
+        const auto path = *paths.begin();
+        paths.erase(path);
+
+        std::ifstream file(path);
         assert(file.is_open());
 
-        for (const auto &instance_json : json::parse(file)) {
-            assert(instance_json.contains(capacityFieldName));
-            assert(instance_json.contains(guestsFieldName));
+        if (!processedInstances.contains(path)) {
+            processedInstances[path] = 0;
+        }
 
-            capacityData.push_back(instance_json[capacityFieldName].get<int>());
-            guestData.push_back(
-                instance_json[guestsFieldName].get<std::vector<std::vector<int>>>());
+        const auto rootNodesJson = json::parse(file);
+
+        for (int i = processedInstances[path]; i < rootNodesJson.size(); ++i) {
+            const auto &instanceJson = rootNodesJson[i];
+            assert(instanceJson.contains(capacityFieldName));
+            assert(instanceJson.contains(guestsFieldName));
+
+            capacityData.push_back(instanceJson[capacityFieldName].get<int>());
+            guestData.push_back(instanceJson[guestsFieldName].get<std::vector<std::vector<int>>>());
+
+            ++processedInstances[path];
 
             if (guestData.size() == maxInstances) {
                 return makeInstances(capacityData, guestData);

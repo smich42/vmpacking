@@ -31,18 +31,19 @@ int main(int argc, char *argv[])
 {
     assert(argc == 4);
 
-    const vmp::GeneralInstanceLoader generalLoader(argv[1]);
-    const auto generalInstance = generalLoader.load(1)[0];
+    vmp::GeneralInstanceLoader generalLoader(argv[1]);
+    vmp::TreeInstanceLoader treeLoader(argv[2]);
+    vmp::ClusterTreeInstanceLoader clusterTreeLoader(argv[3]);
+
+    const auto generalInstance = generalLoader.load(10)[2];
     std::cout << "Loaded general instance with " << generalInstance.getGuestCount() << " guests "
               << std::endl;
 
-    const vmp::TreeInstanceLoader treeLoader(argv[2]);
-    const auto treeInstance = treeLoader.load(1)[0];
+    const auto treeInstance = treeLoader.load(10)[2];
     std::cout << "Loaded tree instance with " << treeInstance.getGuests().size() << " guests "
               << std::endl;
 
-    const vmp::ClusterTreeInstanceLoader clusterTreeLoader(argv[3]);
-    const auto clusterTreeInstance = clusterTreeLoader.load(1)[0];
+    const auto clusterTreeInstance = clusterTreeLoader.load(10)[2];
     std::cout << "Loaded cluster-tree instance with " << clusterTreeInstance.getGuests().size()
               << " guests " << std::endl;
 

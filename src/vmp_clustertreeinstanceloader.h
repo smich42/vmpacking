@@ -1,9 +1,10 @@
 #ifndef VMP_CLUSTERTREEINSTANCELOADER_H
 #define VMP_CLUSTERTREEINSTANCELOADER_H
 
-#include <json.hpp>
 #include <vmp_clustertreeinstance.h>
 
+#include <json.hpp>
+#include <set>
 #include <vector>
 
 namespace vmp
@@ -22,7 +23,7 @@ class ClusterTreeInstanceLoader
                                        std::string clusterChildrenFieldName = "cluster_children");
 
     [[nodiscard]]
-    std::vector<ClusterTreeInstance> load(int maxInstances = -1) const;
+    std::vector<ClusterTreeInstance> load(int maxInstances = -1);
 
     ~ClusterTreeInstanceLoader() = default;
 
@@ -36,6 +37,9 @@ class ClusterTreeInstanceLoader
     const std::string pagesFieldName;
     const std::string guestPagesFieldName;
     const std::string clusterChildrenFieldName;
+
+    std::set<std::filesystem::path> paths;
+    std::unordered_map<std::filesystem::path, int> processedInstances;
 
     [[nodiscard]] std::shared_ptr<Guest> parseGuest(const nlohmann::json &nodeJson) const;
     void parseClusterSubtree(ClusterTreeInstance &instance, size_t parentCluster,

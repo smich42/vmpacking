@@ -1,9 +1,10 @@
 #ifndef VMP_TREEINSTANCELOADER_H
 #define VMP_TREEINSTANCELOADER_H
 
-#include <json.hpp>
 #include <vmp_treeinstance.h>
 
+#include <json.hpp>
+#include <set>
 #include <vector>
 
 namespace vmp
@@ -18,7 +19,7 @@ class TreeInstanceLoader
                                 std::string childrenFieldName = "children");
 
     [[nodiscard]]
-    std::vector<TreeInstance> load(int maxInstances = -1) const;
+    std::vector<TreeInstance> load(int maxInstances = -1);
 
     ~TreeInstanceLoader() = default;
 
@@ -29,6 +30,9 @@ class TreeInstanceLoader
     const std::string guestPagesFieldName;
     const std::string pagesFieldName;
     const std::string childrenFieldName;
+
+    std::set<std::filesystem::path> paths;
+    std::unordered_map<std::filesystem::path, int> processedInstances;
 
     [[nodiscard]] std::shared_ptr<Guest> parseGuest(const nlohmann::json &nodeJson) const;
     void parseChildren(TreeInstance &instance, size_t parent, const nlohmann::json &nodeJson) const;

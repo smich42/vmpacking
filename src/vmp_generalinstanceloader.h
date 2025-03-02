@@ -3,6 +3,8 @@
 
 #include <vmp_generalinstance.h>
 
+#include <json.hpp>
+#include <set>
 #include <vector>
 
 namespace vmp
@@ -15,7 +17,7 @@ class GeneralInstanceLoader
                                    std::string capacityFieldName = "capacity",
                                    std::string guestsFieldName = "guests");
 
-    [[nodiscard]] std::vector<GeneralInstance> load(int maxInstances = -1) const;
+    [[nodiscard]] std::vector<GeneralInstance> load(int maxInstances = -1);
 
     ~GeneralInstanceLoader() = default;
 
@@ -24,6 +26,9 @@ class GeneralInstanceLoader
 
     const std::string capacityFieldName;
     const std::string guestsFieldName;
+
+    std::set<std::filesystem::path> paths;
+    std::unordered_map<std::filesystem::path, int> processedInstances;
 };
 
 }  // namespace vmp

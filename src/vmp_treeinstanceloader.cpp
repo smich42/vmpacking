@@ -46,7 +46,7 @@ void TreeInstanceLoader::parseChildren(TreeInstance &instance, const size_t pare
     }
 };
 
-std::vector<TreeInstance> TreeInstanceLoader::load(const int maxInstances) const
+std::vector<TreeInstance> TreeInstanceLoader::load(const int maxInstances)
 {
     namespace fs = std::filesystem;
 
@@ -54,14 +54,26 @@ std::vector<TreeInstance> TreeInstanceLoader::load(const int maxInstances) const
     instances.reserve(maxInstances);
 
     for (const auto &directoryEntry : fs::directory_iterator(directory)) {
-        if (directoryEntry.path().extension() != ".json") {
-            continue;
+        if (directoryEntry.path().extension() == ".json") {
+            paths.emplace(directoryEntry);
         }
+    }
 
-        std::ifstream file(directoryEntry.path());
+    while (!paths.empty()) {
+        const auto path = *paths.begin();
+        paths.erase(path);
+
+        std::ifstream file(path);
         assert(file.is_open());
 
-        for (const auto &rootNodeJson : json::parse(file)) {
+        if (!processedInstances.contains(path)) {
+            processedInstances[path] = 0;
+        }
+
+        const auto rootNodesJson = json::parse(file);
+
+        for (int i = processedInstances[path]; i < rootNodesJson.size(); ++i) {
+            const auto &rootNodeJson = rootNodesJson[i];
             assert(rootNodeJson.contains(capacityFieldName));
 
             const size_t capacity = rootNodeJson[capacityFieldName].get<size_t>();
@@ -69,20 +81,17 @@ std::vector<TreeInstance> TreeInstanceLoader::load(const int maxInstances) const
                 rootNodeJson[pagesFieldName].get<std::unordered_set<int>>();
             const auto rootGuest = parseGuest(rootNodeJson);
 
-            std::optional<TreeInstance> instance;
-
-            if (rootGuest == nullptr) {
-                instance.emplace(capacity, rootPages);
-            }
-            else {
-                instance.emplace(capacity, rootPages, rootGuest);
-            }
+            TreeInstance instance = rootGuest == nullptr
+                                        ? TreeInstance(capacity, rootPages)
+                                        : TreeInstance(capacity, rootPages, rootGuest);
 
             if (rootNodeJson.contains(childrenFieldName)) {
-                parseChildren(*instance, TreeInstance::getRootNode(), rootNodeJson);
+                parseChildren(instance, TreeInstance::getRootNode(), rootNodeJson);
             }
 
-            instances.push_back(std::move(*instance));
+            instances.push_back(std::move(instance));
+            ++processedInstances[path];
+
             if (instances.size() == maxInstances) {
                 return instances;
             }

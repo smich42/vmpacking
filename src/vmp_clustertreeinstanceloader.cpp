@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <fstream>
+#include <iostream>
 #include <json.hpp>
 
 using json = nlohmann::json;
@@ -62,7 +63,7 @@ void ClusterTreeInstanceLoader::parseClusterSubtree(
     }
 }
 
-std::vector<ClusterTreeInstance> ClusterTreeInstanceLoader::load(const int maxInstances) const
+std::vector<ClusterTreeInstance> ClusterTreeInstanceLoader::load(const int maxInstances)
 {
     namespace fs = std::filesystem;
 
@@ -70,17 +71,29 @@ std::vector<ClusterTreeInstance> ClusterTreeInstanceLoader::load(const int maxIn
     instances.reserve(maxInstances);
 
     for (const auto &directoryEntry : fs::directory_iterator(directory)) {
-        if (directoryEntry.path().extension() != ".json") {
-            continue;
+        if (directoryEntry.path().extension() == ".json") {
+            paths.emplace(directoryEntry);
         }
+    }
 
-        std::ifstream file(directoryEntry.path());
+    while (!paths.empty()) {
+        const auto path = *paths.begin();
+        paths.erase(path);
+
+        std::ifstream file(path);
         assert(file.is_open());
 
-        for (const auto &instanceJson : json::parse(file)) {
-            assert(instanceJson.contains(capacityFieldName));
-            const size_t capacity = instanceJson[capacityFieldName].get<size_t>();
+        if (!processedInstances.contains(path)) {
+            processedInstances[path] = 0;
+        }
 
+        const auto rootNodesJson = json::parse(file);
+
+        for (int i = processedInstances[path]; i < rootNodesJson.size(); ++i) {
+            const auto &instanceJson = rootNodesJson[i];
+            assert(instanceJson.contains(capacityFieldName));
+
+            const size_t capacity = instanceJson[capacityFieldName].get<size_t>();
             std::unordered_map<size_t, size_t> jsonToNodeIds;
 
             ClusterTreeInstance instance(capacity);
@@ -88,6 +101,8 @@ std::vector<ClusterTreeInstance> ClusterTreeInstanceLoader::load(const int maxIn
                                 jsonToNodeIds);
 
             instances.push_back(std::move(instance));
+            ++processedInstances[path];
+
             if (instances.size() == maxInstances) {
                 return instances;
             }
