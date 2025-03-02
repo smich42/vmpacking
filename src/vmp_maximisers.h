@@ -13,6 +13,22 @@
 namespace vmp
 {
 
+// Generates the next lexicographic combination
+static bool next_combination(std::vector<int> &indices, const size_t n)
+{
+    const size_t k = indices.size();
+    for (int i = k - 1; i >= 0; --i) {
+        if (indices[i] < n - k + i) {
+            ++indices[i];
+            for (int j = i + 1; j < k; ++j) {
+                indices[j] = indices[j - 1] + 1;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
 /**
  * Finds the most efficient subset of guests to place on a host given a
  * mandatory subset size, accounting for the reward and page sharing within
@@ -27,45 +43,47 @@ static std::optional<std::vector<std::pair<std::shared_ptr<const Guest>, int>>>
 findMostEfficientSubset(const std::unordered_map<std::shared_ptr<const Guest>, int> &unplaced,
                         const Host &host, const int subsetSize)
 {
-    // We do not use bitmask here as we expect to go over all guests
-    std::vector<bool> selector(unplaced.size());
-    std::fill(selector.end() - subsetSize, selector.end(), true);
+    std::vector<std::pair<std::shared_ptr<const Guest>, int>> guests(unplaced.begin(),
+                                                                     unplaced.end());
+    const size_t guestCount = guests.size();
 
-    std::optional<std::vector<std::pair<std::shared_ptr<const Guest>, int>>> bestSubset =
-        std::nullopt;
-    double bestSubsetValue = 0.;
+    std::optional<std::vector<std::pair<std::shared_ptr<const Guest>, int>>> bestSubset;
+    double bestSubsetValue = 0.0;
+
+    std::vector<int> indices(subsetSize);
+    std::iota(indices.begin(), indices.end(), 0);
 
     do {
-        std::vector<std::pair<std::shared_ptr<const Guest>, int>> candidateSet;
+        std::vector<std::pair<std::shared_ptr<const Guest>, int>> subset;
+        subset.reserve(subsetSize);
 
-        auto it = unplaced.begin();
-        for (size_t i = 0; i < unplaced.size(); ++i, ++it) {
-            if (selector[i]) {
-                candidateSet.emplace_back(*it);
-            }
+        for (const int index : indices) {
+            subset.emplace_back(guests[index]);
         }
 
-        const auto candidateView =
-            std::ranges::subrange(candidateSet.begin(), candidateSet.end()) |
-            std::views::transform([](const auto &pair) { return pair.first; });
+        std::vector<std::shared_ptr<const Guest>> candidateView;
+        candidateView.reserve(subsetSize);
+        for (const auto &guest : subset | std::views::keys) {
+            candidateView.push_back(guest);
+        }
 
         if (!host.accommodatesGuests(candidateView.begin(), candidateView.end())) {
             continue;
         }
 
         const double rewardSum =
-            std::accumulate(candidateSet.begin(), candidateSet.end(), 0.,
-                            [](const double acc, const auto &guest) { return acc + guest.second; });
+            std::accumulate(subset.begin(), subset.end(), 0.0,
+                            [](double acc, const auto &guest) { return acc + guest.second; });
 
-        const double subsetValue =
-            rewardSum / static_cast<double>(1 + host.countPagesWithGuests(candidateView.begin(),
-                                                                          candidateView.end()));
+        const size_t pageCount =
+            host.countPagesWithGuests(candidateView.begin(), candidateView.end());
+        const double subsetValue = rewardSum / static_cast<double>(1 + pageCount);
 
         if (subsetValue > bestSubsetValue) {
-            bestSubset = std::move(candidateSet);
+            bestSubset = std::move(subset);
             bestSubsetValue = subsetValue;
         }
-    } while (std::next_permutation(selector.begin(), selector.end()));
+    } while (next_combination(indices, guestCount));
 
     return bestSubset;
 }
@@ -195,15 +213,10 @@ Packing maximiseByLocalSearch(
             for (const auto &guest : hosts[mostImprovableIndex]->getGuests()) {
                 if (host->hasGuest(guest)) {
                     host->removeGuest(guest);
-                    guestHosts[guest] = host;
+                    guestHosts[guest] = hosts[mostImprovableIndex];
                 }
             }
         }
-    }
-
-    size_t count = 0;
-    for (const auto &host : hosts) {
-        count += host->getGuestCount();
     }
 
     // Clean up as there is no guarantee that we will utilise all bins

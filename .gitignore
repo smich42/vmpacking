@@ -6,3 +6,4 @@ cmake-build-release
 include/
 .DS_Store
 **/.venv/
+*.json

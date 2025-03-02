@@ -50,14 +50,14 @@ Packing solveByOverloadAndRemove(const GeneralInstance &instance);
 Packing solveByLocalityScore(const GeneralInstance &instance);
 
 /**
- * Solves an instance of VM-PACK by searching for the number of bins which will
- * yield a complete packing using the given maximisation algorithm.
+ * Solves an instance of VM-PACK by searching for the minimum number of bins
+ * that yield a complete packing using the given maximisation algorithm.
  *
  * O(log(G) * T_maximiser)
  *
  * @param instance the instance to solve
  * @param maximiser the n-host maximiser
- * @return a valid packing
+ * @return a valid packing with the least maxHosts
  */
 template <typename InstanceType>
     requires Instance<InstanceType>
@@ -65,27 +65,28 @@ Packing solveByMaximiser(
     const InstanceType &instance,
     const std::function<Packing(const InstanceType &instance, size_t maxHosts)> &maximiser)
 {
-    size_t minHosts = 0;
-    size_t maxHosts = instance.getGuests().size() + 1;
+    size_t minHosts = 1;
+    size_t maxHosts = instance.getGuests().size();
 
-    std::shared_ptr<Packing> bestPacking;
+    std::optional<Packing> bestPacking;
 
     while (minHosts <= maxHosts) {
-        const size_t allowedHostCount = (minHosts + maxHosts) / 2;
+        const size_t allowedHostCount = minHosts + (maxHosts - minHosts) / 2;
         Packing candidate = maximiser(instance, allowedHostCount);
 
         if (candidate.getGuestCount() == instance.getGuests().size()) {
-            bestPacking = std::make_shared<Packing>(std::move(candidate));
+            bestPacking = std::move(candidate);
             maxHosts = allowedHostCount - 1;
         }
-        else {  // Not all guests could be packed
+        else {
             minHosts = allowedHostCount + 1;
         }
     }
 
-    if (bestPacking == nullptr) {
+    if (!bestPacking) {
         throw std::runtime_error("No valid packing found; is a guest larger than the capacity?");
     }
+
     return *bestPacking;
 }
 
