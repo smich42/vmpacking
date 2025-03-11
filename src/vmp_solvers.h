@@ -112,7 +112,7 @@ Packing solveBySimpleTree(const TreeInstance &instance);
  * @return a valid packing
  */
 Packing solveBySubsetEfficiency(const GeneralInstance &instance, int initialSubsetSize,
-                                double epsilon = 0.0001);
+                                double epsilon = 0.01);
 
 /**
  * Solves the instance by reduction to the n-host maximisation problem, then approximate reduction
@@ -122,7 +122,7 @@ Packing solveBySubsetEfficiency(const GeneralInstance &instance, int initialSubs
  * @param instance the instance to solve
  * @return a valid packing
  */
-Packing solveByClusterTree(const ClusterTreeInstance &instance, double epsilon = 0.0001);
+Packing solveByClusterTree(const ClusterTreeInstance &instance, double epsilon = 0.01);
 
 }  // namespace vmp
 

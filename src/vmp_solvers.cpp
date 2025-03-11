@@ -356,9 +356,10 @@ Packing solveBySimpleTree(const TreeInstance &instance)
 Packing solveBySubsetEfficiency(const GeneralInstance &instance, int initialSubsetSize,
                                 const double epsilon)
 {
-    const auto &smallestGuest = *std::min_element(
-        instance.getGuests().begin(), instance.getGuests().end(),
-        [](auto &a, auto &b) { return a->getUniquePageCount() < b->getUniquePageCount(); });
+    const auto &smallestGuest =
+        *std::ranges::min_element(instance.getGuests(), [](auto &a, auto &b) {
+            return a->getUniquePageCount() < b->getUniquePageCount();
+        });
 
     const double oneHostApprox =
         std::min(static_cast<double>(instance.getGuestCount()),
