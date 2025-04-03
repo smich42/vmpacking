@@ -16,10 +16,8 @@ double calculateRelSize(const Guest &guest, const std::unordered_map<int, int> &
 
 double calculateSizeRelRatio(const Guest &guest, const std::unordered_map<int, int> &pageFreq);
 
-double calculateLocalityScore(const Guest &guest, const std::shared_ptr<Host> &host,
-                              const std::vector<std::shared_ptr<Host>> &allHosts);
-
-double countGuestPagesPlaced(const Guest &guest, const std::vector<std::shared_ptr<Host>> &hosts);
+double calculateOpportunityAwareEfficiency(const Guest &guest, const std::shared_ptr<Host> &host,
+                                           const std::vector<std::shared_ptr<Host>> &allHosts);
 
 template <SharedPtrIterator<const Guest> GuestIt>
 void decantGuests(
@@ -77,8 +75,8 @@ std::unordered_map<int, int> calculatePageFrequencies(HostIt hostsBegin, HostIt 
 }
 
 template <SharedPtrIterator<const Guest> GuestIt>
-std::vector<std::vector<std::shared_ptr<const Guest>>> makeOneGuestPartition(GuestIt guestsBegin,
-                                                                             GuestIt guestsEnd)
+std::vector<std::vector<std::shared_ptr<const Guest>>>
+partitionAllGuestsTogether(GuestIt guestsBegin, GuestIt guestsEnd)
 {
     // Whole-page decanting
     std::vector<std::shared_ptr<const Guest>> allGuests;
@@ -90,7 +88,7 @@ std::vector<std::vector<std::shared_ptr<const Guest>>> makeOneGuestPartition(Gue
 
 template <SharedPtrIterator<const Guest> GuestIt>
 std::vector<std::vector<std::shared_ptr<const Guest>>>
-makeIndividualGuestPartitions(GuestIt guestsBegin, GuestIt guestsEnd)
+partitionGuestsIndividually(GuestIt guestsBegin, GuestIt guestsEnd)
 {
     // Per-guest decanting
     std::vector<std::vector<std::shared_ptr<const Guest>>> partition;
@@ -111,7 +109,7 @@ inline bool guestsHaveSharedPage(const Guest &guest1, const Guest &guest2)
 
 template <SharedPtrIterator<const Guest> GuestIt>
 std::vector<std::vector<std::shared_ptr<const Guest>>>
-makeShareGraphComponentGuestPartitions(GuestIt guestsBegin, GuestIt guestsEnd)
+partitionConnectedGuestsTogether(GuestIt guestsBegin, GuestIt guestsEnd)
 {
     std::vector<std::vector<std::shared_ptr<const Guest>>> result;
     std::unordered_set<std::shared_ptr<const Guest>> guestsVisited;

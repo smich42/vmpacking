@@ -2,7 +2,6 @@
 
 #include <cassert>
 #include <fstream>
-#include <iostream>
 #include <json.hpp>
 
 using json = nlohmann::json;
@@ -36,8 +35,15 @@ std::shared_ptr<Guest> ClusterTreeInstanceLoader::parseGuest(const json &nodeJso
 
 void ClusterTreeInstanceLoader::parseClusterSubtree(
     ClusterTreeInstance &instance, const size_t parentCluster, const json &clusterJson,
-    std::unordered_map<size_t, size_t> &jsonToNodeIds) const
+    std::unordered_map<size_t, size_t> &fromJsonNode, const bool skipRoot) const
 {
+    if (skipRoot) {
+        for (const auto &clusterChildJson : clusterJson[clusterChildrenFieldName]) {
+            parseClusterSubtree(instance, parentCluster, clusterChildJson, fromJsonNode, false);
+        }
+        return;
+    }
+
     const size_t cluster = instance.createCluster(parentCluster);
 
     for (const auto &nodeJson : clusterJson[nodesFieldName]) {
@@ -47,19 +53,19 @@ void ClusterTreeInstanceLoader::parseClusterSubtree(
         size_t jsonNodeId = nodeJson[nodeIdFieldName].get<size_t>();
 
         std::vector<size_t> parents;
-        for (const size_t jsonParentId : nodeJson[nodeParentsFieldName].get<std::vector<int>>()) {
-            parents.push_back(jsonToNodeIds[jsonParentId]);
+        for (const size_t jsonNodeParent : nodeJson[nodeParentsFieldName].get<std::vector<int>>()) {
+            parents.push_back(fromJsonNode[jsonNodeParent]);
         }
 
         const size_t node = nodeJson.contains(guestPagesFieldName)
                                 ? instance.addLeaf(parents, parseGuest(nodeJson), pages)
                                 : instance.addInner(cluster, parents, pages);
 
-        jsonToNodeIds[jsonNodeId] = node;
+        fromJsonNode[jsonNodeId] = node;
     }
 
     for (const auto &clusterChildJson : clusterJson[clusterChildrenFieldName]) {
-        parseClusterSubtree(instance, cluster, clusterChildJson, jsonToNodeIds);
+        parseClusterSubtree(instance, cluster, clusterChildJson, fromJsonNode, false);
     }
 }
 
@@ -98,7 +104,7 @@ std::vector<ClusterTreeInstance> ClusterTreeInstanceLoader::load(const int maxIn
 
             ClusterTreeInstance instance(capacity);
             parseClusterSubtree(instance, ClusterTreeInstance::getRootCluster(), instanceJson,
-                                jsonToNodeIds);
+                                jsonToNodeIds, true);
 
             instances.push_back(std::move(instance));
             ++processedInstances[path];

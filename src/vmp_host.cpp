@@ -52,6 +52,11 @@ bool Host::accommodatesGuest(const Guest &guest) const
     return countPagesWithGuest(guest) <= capacity;
 }
 
+const std::unordered_map<int, int> &Host::getPageFrequencies() const
+{
+    return pageFrequencies;
+}
+
 size_t Host::getPageFrequency(const int page) const
 {
     return pageFrequencies.contains(page) ? pageFrequencies.at(page) : 0;

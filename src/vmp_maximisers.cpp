@@ -9,13 +9,6 @@
 namespace vmp
 {
 
-/*
- * O((G/initialSubsetSize) * max(comb(G, 0..initialSubsetSize)) * G * P)
- *
- * As for each integer i < G we do comb(G - c_i, initialSubsetSize - c_i)
- * where c_i <= c_i-1 and c_0 = initialSubsetSize
- * but comb is not monotonic wrt c_i
- */
 Host maximiseOneHostBySubsetEfficiency(
     const GeneralInstance &instance,
     const std::unordered_map<std::shared_ptr<const Guest>, int> &profits, int initialSubsetSize)
@@ -70,7 +63,7 @@ struct ProfitScenario
 struct Cost
 {
     size_t pageCount;
-    // TODO: avoid copying guests, instead reference other entries in the cost table and backtrack
+    // TODO avoid copying guests, instead reference other entries in the cost table and backtrack
     std::vector<std::shared_ptr<const Guest>> guests;
 
     Cost() : pageCount(std::numeric_limits<int>::max()) {}
@@ -167,7 +160,6 @@ static std::optional<Cost> findLowestCostAccessibleSelection(const auto &costs,
             continue;
         }
 
-        const auto selection = selectNodesByMask(instance, nodes, selectionMask).first;
         const size_t degree = instance.getClusterChildren(cluster).size();
         // Assume we have already processed the child nodes by topological sort
         const auto &cost = costs.at({ cluster, selectionMask, degree, profitTarget });
@@ -284,7 +276,7 @@ Host maximiseOneHostByClusterTree(
                     // Only those nodes in the child cluster that have at least one parent in
                     // the current selection are accessible, as the mask must be over all the
                     // cluster's nodes
-                    // TODO: consider computing the subset of viable children first and generate
+                    // TODO consider computing the subset of viable children first and generate
                     // all of ITS subsets
                     const size_t newChild = curChildren[j - 1];
                     const std::vector<size_t> &newChildNodes = instance.getClusterNodes(newChild);

@@ -4,21 +4,17 @@
 #include <vmp_solverutils.h>
 #include <vmp_treeinstance.h>
 
-#include <cassert>
 #include <iostream>
 #include <numeric>
 #include <ostream>
+#include <random>
 
 namespace vmp
 {
+
 /**
  * Packs `[guestsBegin, guestsEnd)` sequentially by Next Fit, modifying a
  * partial hosts vector
- *
- * O(G * P), where G is the guest count and P the maximum amount of pages on any one guest;
- * as we go over every guest and try to pack it into the newest host
- * and to check a guest can be accommodated on a host, we iterate over the guest's pages and check
- * containment in and add to host in O(1)
  *
  * @tparam GuestIt any iterator type over `std::shared_ptr<const Guest>`
  * @param capacity the fixed bin capacity
@@ -39,21 +35,59 @@ static void proceedByNextFit(size_t capacity, GuestIt guestsBegin, GuestIt guest
     }
 }
 
-Packing solveByNextFit(const GeneralInstance &instance)
+Packing solveByNextFit(const GeneralInstance &instance, const bool decant)
 {
     std::vector<std::shared_ptr<Host>> hosts;
-    proceedByNextFit(instance.getCapacity(), instance.getGuests().begin(),
-                     instance.getGuests().end(), hosts);
 
+    auto guests = instance.getGuests();
+    proceedByNextFit(instance.getCapacity(), guests.begin(), guests.end(), hosts);
+
+    if (decant) {
+        using SetGuestIt = std::unordered_set<std::shared_ptr<const Guest>>::iterator;
+        decantGuests<SetGuestIt>(hosts, partitionAllGuestsTogether<SetGuestIt>);
+        decantGuests<SetGuestIt>(hosts, partitionConnectedGuestsTogether<SetGuestIt>);
+        decantGuests<SetGuestIt>(hosts, partitionGuestsIndividually<SetGuestIt>);
+    }
+    return Packing(hosts);
+}
+
+// TODO consolidate these
+Packing solveByNextFit(const TreeInstance &instance, const bool decant)
+{
+    std::vector<std::shared_ptr<Host>> hosts;
+
+    const auto &guests = instance.getGuests();
+    proceedByNextFit(instance.getCapacity(), guests.begin(), guests.end(), hosts);
+
+    if (decant) {
+        using SetGuestIt = std::unordered_set<std::shared_ptr<const Guest>>::iterator;
+        decantGuests<SetGuestIt>(hosts, partitionAllGuestsTogether<SetGuestIt>);
+        decantGuests<SetGuestIt>(hosts, partitionConnectedGuestsTogether<SetGuestIt>);
+        decantGuests<SetGuestIt>(hosts, partitionGuestsIndividually<SetGuestIt>);
+    }
+
+    return Packing(hosts);
+}
+
+Packing solveByNextFit(const ClusterTreeInstance &instance, const bool decant)
+{
+    std::vector<std::shared_ptr<Host>> hosts;
+
+    const auto &guests = instance.getGuests();
+    proceedByNextFit(instance.getCapacity(), guests.begin(), guests.end(), hosts);
+
+    if (decant) {
+        using SetGuestIt = std::unordered_set<std::shared_ptr<const Guest>>::iterator;
+        decantGuests<SetGuestIt>(hosts, partitionAllGuestsTogether<SetGuestIt>);
+        decantGuests<SetGuestIt>(hosts, partitionConnectedGuestsTogether<SetGuestIt>);
+        decantGuests<SetGuestIt>(hosts, partitionGuestsIndividually<SetGuestIt>);
+    }
     return Packing(hosts);
 }
 
 /**
  * Packs `[guestsBegin, guestsEnd)` sequentially by First Fit, modifying a
  * partial hosts vector
- *
- * O(G^2 * P), where G is the guest count and P the maximum amount of pages on any one guest;
- * as we go over every host for every guest
  *
  * @tparam GuestIt any iterator type over `std::shared_ptr<const Guest>`
  * @param capacity the fixed bin capacity
@@ -70,6 +104,7 @@ static void proceedByFirstFit(size_t capacity, GuestIt guestsBegin, GuestIt gues
 
         auto hostIter = std::ranges::find_if(
             hosts, [&](const auto &host) { return host->accommodatesGuest(*guest); });
+
         if (hostIter == hosts.end()) {
             hosts.push_back(std::make_shared<Host>(capacity));
             hostIter = hosts.end() - 1;
@@ -82,8 +117,30 @@ static void proceedByFirstFit(size_t capacity, GuestIt guestsBegin, GuestIt gues
 Packing solveByFirstFit(const GeneralInstance &instance)
 {
     std::vector<std::shared_ptr<Host>> hosts;
-    proceedByFirstFit(instance.getCapacity(), instance.getGuests().begin(),
-                      instance.getGuests().end(), hosts);
+    auto guests = instance.getGuests();
+
+    proceedByFirstFit(instance.getCapacity(), guests.begin(), guests.end(), hosts);
+
+    return Packing(hosts);
+}
+
+// TODO consolidate these
+Packing solveByFirstFit(const TreeInstance &instance)
+{
+    std::vector<std::shared_ptr<Host>> hosts;
+
+    const auto &guests = instance.getGuests();
+    proceedByFirstFit(instance.getCapacity(), guests.begin(), guests.end(), hosts);
+
+    return Packing(hosts);
+}
+
+Packing solveByFirstFit(const ClusterTreeInstance &instance)
+{
+    std::vector<std::shared_ptr<Host>> hosts;
+
+    const auto &guests = instance.getGuests();
+    proceedByFirstFit(instance.getCapacity(), guests.begin(), guests.end(), hosts);
 
     return Packing(hosts);
 }
@@ -92,14 +149,6 @@ Packing solveByFirstFit(const GeneralInstance &instance)
  * Packs `[guestsBegin, guestsEnd)` sequentially by "Best Fusion" of Grange, et
  * al. (2021), modifying a partial hosts vector
  *
- * O(G^3 * P)
- *
- * as we do
- * O(P) + O(G^2 * 2P) + partition_time + O(G^2 * partitions * (P + P*G/partitions))
- * where
- *  partition_time = O(G^2 * P)
- *  partitions = O(1) or O(G) (including in the component case)
- *
  * @tparam GuestIt any iterator type over `std::shared_ptr<const Guest>`
  * @param capacity the fixed bin capacity
  * @param guestsBegin the start of guest range
@@ -107,11 +156,9 @@ Packing solveByFirstFit(const GeneralInstance &instance)
  * @param hosts the partial hosts vector to use
  */
 template <SharedPtrIterator<const Guest> GuestIt>
-static void proceedByBestFusion(size_t capacity, GuestIt guestsBegin, GuestIt guestsEnd,
+static void proceedByEfficiency(size_t capacity, GuestIt guestsBegin, GuestIt guestsEnd,
                                 std::vector<std::shared_ptr<Host>> &hosts)
 {
-    const auto frequencies = calculatePageFrequencies(guestsBegin, guestsEnd);
-
     for (; guestsBegin != guestsEnd; ++guestsBegin) {
         const auto &guest = *guestsBegin;
 
@@ -123,8 +170,8 @@ static void proceedByBestFusion(size_t capacity, GuestIt guestsBegin, GuestIt gu
                 continue;
             }
 
-            const double candidateRelSize = calculateRelSize(*guest, frequencies);
-            if (candidateRelSize < bestRelSize) {
+            const double candidateRelSize = calculateRelSize(*guest, host->getPageFrequencies());
+            if (candidateRelSize <= bestRelSize) {
                 bestHost = host;
                 bestRelSize = candidateRelSize;
             }
@@ -136,19 +183,35 @@ static void proceedByBestFusion(size_t capacity, GuestIt guestsBegin, GuestIt gu
         }
         bestHost->addGuest(*guestsBegin);
     }
-
-    using SetGuestIt = std::unordered_set<std::shared_ptr<const Guest>>::iterator;
-    decantGuests<SetGuestIt>(hosts, makeOneGuestPartition<SetGuestIt>);
-    decantGuests<SetGuestIt>(hosts, makeShareGraphComponentGuestPartitions<SetGuestIt>);
-    decantGuests<SetGuestIt>(hosts, makeIndividualGuestPartitions<SetGuestIt>);
 }
 
-Packing solveByBestFusion(const GeneralInstance &instance)
+Packing solveByEfficiency(const GeneralInstance &instance, const bool decant)
 {
     std::vector<std::shared_ptr<Host>> hosts;
     const auto &guests = instance.getGuests();
-    proceedByBestFusion(instance.getCapacity(), guests.begin(), guests.end(), hosts);
+    proceedByEfficiency(instance.getCapacity(), guests.begin(), guests.end(), hosts);
 
+    if (decant) {
+        using SetGuestIt = std::unordered_set<std::shared_ptr<const Guest>>::iterator;
+        decantGuests<SetGuestIt>(hosts, partitionAllGuestsTogether<SetGuestIt>);
+        decantGuests<SetGuestIt>(hosts, partitionConnectedGuestsTogether<SetGuestIt>);
+        decantGuests<SetGuestIt>(hosts, partitionGuestsIndividually<SetGuestIt>);
+    }
+    return Packing(hosts);
+}
+
+Packing solveByEfficiency(const ClusterTreeInstance &instance, const bool decant)
+{
+    std::vector<std::shared_ptr<Host>> hosts;
+    const auto &guests = instance.getGuests();
+    proceedByEfficiency(instance.getCapacity(), guests.begin(), guests.end(), hosts);
+
+    if (decant) {
+        using SetGuestIt = std::unordered_set<std::shared_ptr<const Guest>>::iterator;
+        decantGuests<SetGuestIt>(hosts, partitionAllGuestsTogether<SetGuestIt>);
+        decantGuests<SetGuestIt>(hosts, partitionConnectedGuestsTogether<SetGuestIt>);
+        decantGuests<SetGuestIt>(hosts, partitionGuestsIndividually<SetGuestIt>);
+    }
     return Packing(hosts);
 }
 
@@ -156,26 +219,20 @@ Packing solveByBestFusion(const GeneralInstance &instance)
  * Packs `[guestsBegin, guestsEnd)` sequentially by "Overload-and-Remove" of
  * Grange, et al. (2021), modifying a partial hosts vector
  *
- * O(G^3 * P)
- *
- * as we do O(P) + O(G * (G*P + G*(G*P + P))
- *
- *
  * @tparam GuestIt any iterator type over `std::shared_ptr<const Guest>`
  * @param capacity the fixed bin capacity
  * @param guestsBegin the start of guest range
  * @param guestsEnd the end of guest range
  * @param hosts the partial hosts vector to use
+ * @param decant whether to apply the decanting post-treatment
  */
 template <SharedPtrIterator<const Guest> GuestIt>
 static void proceedByOverloadAndRemove(size_t capacity, GuestIt guestsBegin, GuestIt guestsEnd,
-                                       std::vector<std::shared_ptr<Host>> &hosts)
+                                       std::vector<std::shared_ptr<Host>> &hosts, const bool decant)
 {
     std::deque unplaced(guestsBegin, guestsEnd);
     std::unordered_map<std::shared_ptr<const Guest>, std::unordered_set<std::shared_ptr<Host>>>
         attemptedPlacements;
-    const auto frequencies = calculatePageFrequencies(guestsBegin, guestsEnd);
-
     while (!unplaced.empty()) {
         // Select best container based on relative size
         const auto guest = unplaced.front();
@@ -188,7 +245,7 @@ static void proceedByOverloadAndRemove(size_t capacity, GuestIt guestsBegin, Gue
             if (attemptedPlacements[guest].contains(host)) {
                 continue;
             }
-            const auto candidateRelSize = calculateRelSize(*guest, frequencies);
+            const auto candidateRelSize = calculateRelSize(*guest, host->getPageFrequencies());
             if (candidateRelSize < bestRelSize) {
                 bestHost = host;
                 bestRelSize = candidateRelSize;
@@ -207,7 +264,7 @@ static void proceedByOverloadAndRemove(size_t capacity, GuestIt guestsBegin, Gue
         while (bestHost->isOverfull()) {
             const auto worstGuest =
                 *std::ranges::min_element(bestHost->getGuests(), {}, [&](const auto &candidate) {
-                    return calculateSizeRelRatio(*candidate, frequencies);
+                    return calculateSizeRelRatio(*candidate, bestHost->getPageFrequencies());
                 });
 
             unplaced.push_back(worstGuest);
@@ -228,22 +285,33 @@ static void proceedByOverloadAndRemove(size_t capacity, GuestIt guestsBegin, Gue
 
     proceedByFirstFit(capacity, unplaced.begin(), unplaced.end(), hosts);
 
-    using SetGuestIt = std::unordered_set<std::shared_ptr<const Guest>>::iterator;
-    decantGuests<SetGuestIt>(hosts, makeOneGuestPartition<SetGuestIt>);
-    decantGuests<SetGuestIt>(hosts, makeShareGraphComponentGuestPartitions<SetGuestIt>);
-    decantGuests<SetGuestIt>(hosts, makeIndividualGuestPartitions<SetGuestIt>);
+    if (decant) {
+        using SetGuestIt = std::unordered_set<std::shared_ptr<const Guest>>::iterator;
+        decantGuests<SetGuestIt>(hosts, partitionAllGuestsTogether<SetGuestIt>);
+        decantGuests<SetGuestIt>(hosts, partitionConnectedGuestsTogether<SetGuestIt>);
+        decantGuests<SetGuestIt>(hosts, partitionGuestsIndividually<SetGuestIt>);
+    }
 }
 
-Packing solveByOverloadAndRemove(const GeneralInstance &instance)
+Packing solveByOverloadAndRemove(const GeneralInstance &instance, const bool decant)
 {
     std::vector<std::shared_ptr<Host>> hosts;
     proceedByOverloadAndRemove(instance.getCapacity(), instance.getGuests().begin(),
-                               instance.getGuests().end(), hosts);
+                               instance.getGuests().end(), hosts, decant);
 
     return Packing(hosts);
 }
 
-Packing solveByLocalityScore(const GeneralInstance &instance)
+Packing solveByOverloadAndRemove(const ClusterTreeInstance &instance, const bool decant)
+{
+    std::vector<std::shared_ptr<Host>> hosts;
+    const auto &guests = instance.getGuests();
+    proceedByOverloadAndRemove(instance.getCapacity(), guests.begin(), guests.end(), hosts, decant);
+
+    return Packing(hosts);
+}
+
+Packing solveByOpportunityAwareEfficiency(const GeneralInstance &instance, const bool decant)
 {
     std::vector<std::shared_ptr<Host>> hosts;
     std::unordered_set unplaced(instance.getGuests().begin(), instance.getGuests().end());
@@ -263,7 +331,8 @@ Packing solveByLocalityScore(const GeneralInstance &instance)
                 if (!host->accommodatesGuest(*guest)) {
                     continue;
                 }
-                const double candidateScore = calculateLocalityScore(*guest, host, hosts);
+                const double candidateScore =
+                    calculateOpportunityAwareEfficiency(*guest, host, hosts);
                 if (candidateScore > bestScore) {
                     bestGuest = guest;
                     bestHost = host;
@@ -281,92 +350,68 @@ Packing solveByLocalityScore(const GeneralInstance &instance)
         unplaced.erase(bestGuest);
     }
 
+    if (decant) {
+        using SetGuestIt = std::unordered_set<std::shared_ptr<const Guest>>::iterator;
+        decantGuests<SetGuestIt>(hosts, partitionAllGuestsTogether<SetGuestIt>);
+        decantGuests<SetGuestIt>(hosts, partitionConnectedGuestsTogether<SetGuestIt>);
+        decantGuests<SetGuestIt>(hosts, partitionGuestsIndividually<SetGuestIt>);
+    }
     return Packing(hosts);
 }
 
-/*
- * O((G^2 * P) + N^2), where N is the number of nodes in the tree (bounded above by G + total number
- * of unique pages in the instance)
- *
- * as we have
- * O(G^2 * P) for the sum of all the first-fits (each guest is packed exactly once)
- * plus, in the worst case, each subtree we remove has size N / 2, so the loop runs O(N / 2) times
- * and each subtree removal costs O(N / 2) and iterating over the subtree's nodes is O(2 * N/2),
- * as each node is considered twice, once as a child, once as a parent
- */
-Packing solveBySimpleTree(const TreeInstance &instance)
+// TODO consolidate this
+Packing solveByOpportunityAwareEfficiency(const ClusterTreeInstance &instance, const bool decant)
 {
-    TreeInstance instanceCopy = instance;
-
     std::vector<std::shared_ptr<Host>> hosts;
+    const auto &guests = instance.getGuests();
+    std::unordered_set unplaced(guests.begin(), guests.end());
 
-    while (true) {
-        const auto lowerBounds = calculateAllSubtreeLowerBounds(instanceCopy);
+    while (!unplaced.empty()) {
+        std::shared_ptr<const Guest> largestGuest;
+        std::shared_ptr<const Guest> bestGuest;
+        std::shared_ptr<Host> bestHost;
+        double bestScore = std::numeric_limits<double>::min();
 
-        if (lowerBounds.at(TreeInstance::getRootNode()).count == 1) {
-            const auto &guests = instanceCopy.getGuests();
-            if (guests.empty()) {
-                break;
+        for (const auto &guest : unplaced) {
+            if (!largestGuest || guest->getUniquePageCount() > largestGuest->getUniquePageCount()) {
+                largestGuest = guest;
             }
 
-            Host host(instanceCopy.getCapacity());
-            host.addGuests(guests.begin(), guests.end());
-
-            hosts.push_back(std::make_shared<Host>(host));
-            break;
-        }
-
-        size_t minNode = std::numeric_limits<size_t>::max();
-        size_t minNodeCount = std::numeric_limits<size_t>::max();
-
-        for (const auto &[node, bounds] : lowerBounds) {
-            if (bounds.count <= 1) {
-                continue;
-            }
-
-            const auto &children = instanceCopy.getNodeChildren(node);
-            if (!std::ranges::all_of(children, [&](const size_t child) {
-                    return lowerBounds.at(child).count == 1;
-                })) {
-                continue;
-            }
-
-            if (minNode == std::numeric_limits<size_t>::max() || bounds.count < minNodeCount) {
-                minNode = node;
-                minNodeCount = bounds.count;
+            for (const auto &host : hosts) {
+                if (!host->accommodatesGuest(*guest)) {
+                    continue;
+                }
+                const double candidateScore =
+                    calculateOpportunityAwareEfficiency(*guest, host, hosts);
+                if (candidateScore > bestScore) {
+                    bestGuest = guest;
+                    bestHost = host;
+                    bestScore = candidateScore;
+                }
             }
         }
 
-        assert(minNode != std::numeric_limits<size_t>::max());
-
-        const auto &guestsToPack = instanceCopy.getSubtreeGuests(minNode);
-        proceedByFirstFit(instanceCopy.getCapacity(), guestsToPack.begin(), guestsToPack.end(),
-                          hosts);
-
-        if (minNode == TreeInstance::getRootNode()) {
-            break;
+        if (!bestGuest) {
+            bestHost = std::make_shared<Host>(instance.getCapacity());
+            bestGuest = largestGuest;
+            hosts.push_back(bestHost);
         }
-
-        instanceCopy.removeSubtree(minNode);
+        bestHost->addGuest(bestGuest);
+        unplaced.erase(bestGuest);
     }
 
+    if (decant) {
+        using SetGuestIt = std::unordered_set<std::shared_ptr<const Guest>>::iterator;
+        decantGuests<SetGuestIt>(hosts, partitionAllGuestsTogether<SetGuestIt>);
+        decantGuests<SetGuestIt>(hosts, partitionConnectedGuestsTogether<SetGuestIt>);
+        decantGuests<SetGuestIt>(hosts, partitionGuestsIndividually<SetGuestIt>);
+    }
     return Packing(hosts);
 }
 
-Packing solveBySubsetEfficiency(const GeneralInstance &instance, int initialSubsetSize,
-                                const double epsilon)
+Packing solveByLocalSubsetEfficiency(const GeneralInstance &instance, const int initialSubsetSize,
+                                     const bool decant)
 {
-    const auto &smallestGuest =
-        *std::ranges::min_element(instance.getGuests(), [](auto &a, auto &b) {
-            return a->getUniquePageCount() < b->getUniquePageCount();
-        });
-
-    const double oneHostApprox =
-        std::min(static_cast<double>(instance.getGuestCount()),
-                 static_cast<double>(instance.getCapacity()) /
-                     static_cast<double>(smallestGuest->getUniquePageCount())) /
-        static_cast<double>(initialSubsetSize);
-
     auto oneHostMaximiser =
         [&](const GeneralInstance &inst,
             const std::unordered_map<std::shared_ptr<const Guest>, int> &profits) {
@@ -374,18 +419,14 @@ Packing solveBySubsetEfficiency(const GeneralInstance &instance, int initialSubs
         };
 
     auto nHostMaximiser = [&](const GeneralInstance &inst, const size_t maxHosts) {
-        return maximiseByLocalSearch<GeneralInstance>(inst, maxHosts, oneHostMaximiser,
-                                                      oneHostApprox, epsilon);
+        return maximiseByLocalSearch<GeneralInstance>(inst, maxHosts, oneHostMaximiser);
     };
 
-    return solveByMaximiser<GeneralInstance>(instance, nHostMaximiser);
+    return solveByMaximiser<GeneralInstance>(instance, nHostMaximiser, true, decant);
 }
 
-Packing solveByClusterTree(const ClusterTreeInstance &instance, const double epsilon)
+Packing solveByLocalClusterTree(const ClusterTreeInstance &instance, const bool decant)
 {
-    // O(log n)-approx
-    const double oneHostApprox = std::log2(instance.getNodeCount());
-
     auto oneHostMaximiser =
         [&](const ClusterTreeInstance &inst,
             const std::unordered_map<std::shared_ptr<const Guest>, int> &profits) {
@@ -393,11 +434,10 @@ Packing solveByClusterTree(const ClusterTreeInstance &instance, const double eps
         };
 
     auto nHostMaximiser = [&](const ClusterTreeInstance &inst, const size_t maxHosts) {
-        return maximiseByLocalSearch<ClusterTreeInstance>(inst, maxHosts, oneHostMaximiser,
-                                                          oneHostApprox, epsilon);
+        return maximiseByLocalSearch<ClusterTreeInstance>(inst, maxHosts, oneHostMaximiser);
     };
 
-    return solveByMaximiser<ClusterTreeInstance>(instance, nHostMaximiser);
+    return solveByMaximiser<ClusterTreeInstance>(instance, nHostMaximiser, true, decant);
 }
 
 }  // namespace vmp

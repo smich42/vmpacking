@@ -13,10 +13,15 @@ namespace vmp
 
 double calculateRelSize(const Guest &guest, const std::unordered_map<int, int> &pageFreq)
 {
-    return std::accumulate(guest.pages.begin(), guest.pages.end(), 0.0,
-                           [&](const double sum, const int page) {
-                               return sum + 1.0 / static_cast<double>(pageFreq.at(page));
-                           });
+    double total = 0.0;
+
+    for (int page : guest.pages) {
+        auto pageIt = pageFreq.find(page);
+        const int frequency = (pageIt != pageFreq.end()) ? pageIt->second : 0;
+        total += (frequency > 0) ? (1.0 / frequency) : 1.0;
+    }
+
+    return total;
 }
 
 double calculateSizeRelRatio(const Guest &guest, const std::unordered_map<int, int> &pageFreq)
@@ -24,8 +29,8 @@ double calculateSizeRelRatio(const Guest &guest, const std::unordered_map<int, i
     return static_cast<double>(guest.getUniquePageCount()) / calculateRelSize(guest, pageFreq);
 }
 
-double calculateLocalityScore(const Guest &guest, const std::shared_ptr<Host> &host,
-                              const std::vector<std::shared_ptr<Host>> &allHosts)
+double calculateOpportunityAwareEfficiency(const Guest &guest, const std::shared_ptr<Host> &host,
+                                           const std::vector<std::shared_ptr<Host>> &allHosts)
 {
     const size_t pagesOnHost = guest.countUniquePagesOn(*host);
 
@@ -39,21 +44,6 @@ double calculateLocalityScore(const Guest &guest, const std::shared_ptr<Host> &h
 
     return static_cast<double>(pagesOnHost + minDifferenceWithOtherHost) /
            std::sqrt(guest.getUniquePageCount());
-}
-
-double countGuestPagesPlaced(const Guest &guest,
-                             const std::vector<std::shared_ptr<const Host>> &hosts)
-{
-    const auto frequencies = calculatePageFrequencies(hosts.begin(), hosts.end());
-
-    int count = 0;
-    for (int page : guest.pages) {
-        if (frequencies.contains(page)) {
-            ++count;
-        }
-    }
-
-    return count;
 }
 
 std::unordered_map<size_t, TreeLowerBounds>

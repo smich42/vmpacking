@@ -5,7 +5,6 @@
 #include <vmp_packing.h>
 #include <vmp_types.h>
 
-#include <cassert>
 #include <iostream>
 #include <numeric>
 #include <ranges>
@@ -13,18 +12,18 @@
 namespace vmp
 {
 
-// Generates the next lexicographic combination
 static bool next_combination(std::vector<int> &indices, const size_t n)
 {
-    const size_t k = indices.size();
+    const int k = static_cast<int>(indices.size());
     for (int i = k - 1; i >= 0; --i) {
-        if (indices[i] < n - k + i) {
-            ++indices[i];
-            for (int j = i + 1; j < k; ++j) {
-                indices[j] = indices[j - 1] + 1;
-            }
-            return true;
+        if (indices[i] >= n - k + i) {
+            continue;
         }
+        ++indices[i];
+        for (int j = i + 1; j < k; ++j) {
+            indices[j] = indices[j - 1] + 1;
+        }
+        return true;
     }
     return false;
 }
@@ -37,15 +36,16 @@ static bool next_combination(std::vector<int> &indices, const size_t n)
  * @param unplaced the pool of guests to sample
  * @param host the host to place the guests on
  * @param subsetSize the number of guests to place
- * @return the most efficient subset of guests, or std::nullopt if no valid
+ * @return the most efficient subset of guests, or `std::nullopt` if no viable subset exists
  */
 static std::optional<std::vector<std::pair<std::shared_ptr<const Guest>, int>>>
 findMostEfficientSubset(const std::unordered_map<std::shared_ptr<const Guest>, int> &unplaced,
-                        const Host &host, const int subsetSize)
+                        const Host &host, int subsetSize)
 {
     std::vector<std::pair<std::shared_ptr<const Guest>, int>> guests(unplaced.begin(),
                                                                      unplaced.end());
-    const size_t guestCount = guests.size();
+    const int guestCount = static_cast<int>(guests.size());
+    subsetSize = std::min(guestCount, subsetSize);
 
     std::optional<std::vector<std::pair<std::shared_ptr<const Guest>, int>>> bestSubset;
     double bestSubsetValue = 0.0;
@@ -56,7 +56,6 @@ findMostEfficientSubset(const std::unordered_map<std::shared_ptr<const Guest>, i
     do {
         std::vector<std::pair<std::shared_ptr<const Guest>, int>> subset;
         subset.reserve(subsetSize);
-
         for (const int index : indices) {
             subset.emplace_back(guests[index]);
         }
@@ -95,11 +94,7 @@ findMostEfficientSubset(const std::unordered_map<std::shared_ptr<const Guest>, i
  *
  * @param instance the instance to maximise
  * @param profits the profit acquired by packing each guest
- * @param initialSubsetSize the initial subset size to try.
- *
- * O(max(comb(G, 0..initialSubsetSize)) * G^2 * P)
- *
- * Defaults to 1.
+ * @param initialSubsetSize the initial subset size to try. Defaults to 1.
  * @return a host with the most valuable guests placed
  */
 Host maximiseOneHostBySubsetEfficiency(
@@ -111,9 +106,6 @@ Host maximiseOneHostBySubsetEfficiency(
  * Maximises the number of guests placed on a single host on the Cluster Tree
  * model. See Sinderal, et al. (2011).
  *
- * O((C * 2^(2N) * profit_upper_bound^2 + P) * G), where G is the number of guests, C of
- * clusters, N the maximum number of nodes in a cluster and P of pages on a guest
- *
  * @param instance the instance to maximise
  * @param profits the profit acquired by packing each guest
  * @return the maximised host
@@ -124,17 +116,11 @@ Host maximiseOneHostByClusterTree(
 
 /**
  * Maximises the number of guests placed on `allowedHostCount` hosts by using a
- * single-host maximiser. See Fleischer, et al. (2006).
- *
- * O(T_maximiser * allowedHostCount^2 * oneHostApproxRatio * log(1/epsilon) * G * P)
+ * single-host maximiser. Inspired by Fleischer, et al. (2006).
  *
  * @param instance the instance to maximise
  * @param allowedHostCount the number of hosts to use
  * @param oneHostMaximiser the single-host maximiser to use
- * @param oneHostApproxRatio the approximation ratio of the single-host
- * maximiser
- * @param epsilon the approximation factor from Fleischer, et al. (2006). The
- * resulting approximation factor is oneHostApproxRatio/(oneHostApproxRatio + 1) - epsilon.
  * @return a packing with at most `allowedHostCount` hosts
  */
 template <typename InstanceType>
@@ -143,85 +129,27 @@ Packing maximiseByLocalSearch(
     const InstanceType &instance, const size_t allowedHostCount,
     const std::function<Host(const InstanceType &,
                              const std::unordered_map<std::shared_ptr<const Guest>, int> &)>
-        &oneHostMaximiser,
-    const double oneHostApproxRatio, const double epsilon)
+        &oneHostMaximiser)
 {
-    const size_t guestCount = instance.getGuests().size();
-
     std::vector<std::shared_ptr<Host>> hosts;
-    std::unordered_map<std::shared_ptr<const Guest>, std::shared_ptr<Host>> guestHosts;
+    std::unordered_map<std::shared_ptr<const Guest>, int> profits;
 
-    hosts.reserve(allowedHostCount);
-
-    for (size_t i = 0; i < allowedHostCount; ++i) {
-        const auto host = std::make_shared<Host>(instance.getCapacity());
-
-        for (size_t j = 0; j < guestCount; ++j) {
-            const auto guest = instance.getGuests()[j];
-
-            if (!guestHosts.contains(guest) && host->accommodatesGuest(*guest)) {
-                host->addGuest(guest);
-                guestHosts.emplace(guest, host);
-            }
-        }
-
-        hosts.push_back(host);
+    for (const auto &guest : instance.getGuests()) {
+        profits[guest] = 1;
     }
 
-    // Fleischer, et al. iteration count for achieving
-    // (oneHostApproxRatio/(oneHostApproxRatio + 1) + epsilon) approximation
-    const size_t iterations = std::abs(static_cast<int>(std::ceil(
-        static_cast<double>(allowedHostCount) * std::log(1.0 / epsilon) / oneHostApproxRatio)));
+    size_t placed = 0;
+    while (placed < instance.getGuests().size() && hosts.size() < allowedHostCount) {
+        Host newHost = oneHostMaximiser(instance, profits);
 
-    for (size_t iteration = 0; iteration < iterations; ++iteration) {
-        int maxImprovement = 0;
-        size_t mostImprovableIndex = 0;
-        std::shared_ptr<Host> mostImprovingCandidate;
-
-        for (size_t i = 0; i < hosts.size(); ++i) {
-            std::unordered_map<std::shared_ptr<const Guest>, int> profits;
-
-            for (const auto &guest : instance.getGuests()) {
-                int value = 1;
-                if (guestHosts.contains(guest) && guestHosts.at(guest) != hosts[i]) {
-                    value = 0;
-                }
-                profits[guest] = value;
-            }
-
-            Host candidate = oneHostMaximiser(instance, profits);
-            const int improvement = static_cast<int>(candidate.getGuests().size()) -
-                                    static_cast<int>(hosts[i]->getGuests().size());
-
-            if (improvement > maxImprovement) {
-                maxImprovement = improvement;
-                mostImprovableIndex = i;
-                mostImprovingCandidate = std::make_shared<Host>(candidate);
-            }
+        for (const auto &guest : newHost.getGuests()) {
+            profits[guest] = 0;
         }
 
-        if (maxImprovement <= 0) {
-            break;
-        }
-
-        hosts[mostImprovableIndex] = mostImprovingCandidate;
-        for (const auto &host : hosts) {
-            if (host == hosts[mostImprovableIndex]) {
-                continue;
-            }
-
-            for (const auto &guest : hosts[mostImprovableIndex]->getGuests()) {
-                if (host->hasGuest(guest)) {
-                    host->removeGuest(guest);
-                    guestHosts[guest] = hosts[mostImprovableIndex];
-                }
-            }
-        }
+        placed += newHost.getGuests().size();
+        hosts.emplace_back(std::make_shared<Host>(std::move(newHost)));
     }
 
-    // Clean up as there is no guarantee that we will utilise all bins
-    std::erase_if(hosts,
-                  [](const std::shared_ptr<Host> &host) { return host->getGuests().empty(); });
     return Packing(hosts);
 }
 

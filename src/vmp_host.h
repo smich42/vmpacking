@@ -86,6 +86,13 @@ class Host
     [[nodiscard]] size_t getPageFrequency(int page) const;
 
     /**
+     * Get a mapping of each page to the number of guests on this host that share it
+     *
+     * @return the number of guests
+     */
+    [[nodiscard]] const std::unordered_map<int, int> &getPageFrequencies() const;
+
+    /**
      * The number of *unique* pages on this host
      *
      * @return the number of *unique* pages on this host

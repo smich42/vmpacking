@@ -41,6 +41,9 @@ class Packing
   public:
     explicit Packing(const std::vector<std::shared_ptr<Host>> &hosts);
 
+    explicit Packing(const std::vector<std::shared_ptr<Host>> &hosts, int localSearch_iterations,
+                     std::vector<int> localSearch_improvements);
+
     Packing(Packing &other) noexcept = default;
     Packing(Packing &&other) noexcept = default;
 
@@ -85,7 +88,8 @@ class Packing
 
     [[nodiscard]] size_t getGuestCount() const;
     [[nodiscard]] size_t getHostCount() const;
-    const std::vector<std::shared_ptr<Host>> &getHosts() const;
+
+    [[nodiscard]] std::vector<std::shared_ptr<Host>> &getHosts();
 
   private:
     std::vector<std::shared_ptr<Host>> hosts;

@@ -12,6 +12,8 @@ Packing::Packing(const std::vector<std::shared_ptr<Host>> &hosts) : guestCount(0
 
 void Packing::addHost(const std::shared_ptr<Host> &host)
 {
+    // TODO this copy is fine, but Packing is used as an intermediate representation in some
+    // solvers. Remove those uses of Packing.
     hosts.push_back(host);
     guestCount += host->getGuestCount();
 }
@@ -26,7 +28,7 @@ size_t Packing::getHostCount() const
     return hosts.size();
 }
 
-const std::vector<std::shared_ptr<Host>> &Packing::getHosts() const
+std::vector<std::shared_ptr<Host>> &Packing::getHosts()
 {
     return hosts;
 }

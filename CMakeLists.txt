@@ -22,5 +22,4 @@ add_library(vmp STATIC ${LIB_SOURCES} ${LIB_HEADERS})
 target_include_directories(vmp PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
 add_subdirectory(src)
-add_subdirectory(examples)
 

@@ -44,7 +44,8 @@ class ClusterTreeInstanceLoader
     [[nodiscard]] std::shared_ptr<Guest> parseGuest(const nlohmann::json &nodeJson) const;
     void parseClusterSubtree(ClusterTreeInstance &instance, size_t parentCluster,
                              const nlohmann::json &clusterJson,
-                             std::unordered_map<size_t, size_t> &jsonToNodeIds) const;
+                             std::unordered_map<size_t, size_t> &fromJsonNode,
+                             bool skipRoot = false) const;
 };
 
 };  // namespace vmp
