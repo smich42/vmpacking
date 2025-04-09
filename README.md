@@ -12,8 +12,8 @@ Approximations currently implemented:
 * Greedy Placement by Opportunity-Aware Efficiency
 * Tree-Based Placement
 * Overload and Remove
-* Greedy Placement by Subset Efficiency (Reduction from VM Maximisation)
-* Cluster Tree-Based Placement (Reduction from VM Maximisation)
+* Greedy Placement by Subset Efficiency (Reduction to VM Maximisation)
+* Cluster Tree-Based DP (Reduction to VM Maximisation)
 
 All as credited in the relevant code.
 
