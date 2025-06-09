@@ -54,10 +54,14 @@ Build the project:
 cmake --build .
 ```
 
-## Important TODOs
+## TODOs
 
-* `GuestSelection(size_t, const std::vector<std::shared_ptr<const Guest>> &)` copies the guest vector. As this is an
-  intermediate step in the Cluster Tree maximisation algorithm, it likely degrades performance substantially. Refactor
-  the code to store only the selection mask for each cluster, and backtrack to reconstruct the guest vector.
+* (Priority) `GuestSelection(size_t, const std::vector<std::shared_ptr<const Guest>> &)` copies the guest vector. As
+  this is an intermediate step in the Cluster Tree maximisation algorithm, it likely degrades performance substantially.
+  Store only the selection mask for each cluster, and backtrack to reconstruct the guest vector.
 
 * Add simple hand-traced cases as unit tests.
+
+* Refactor the parsers for clarity
+
+* Enforce invariants by design in the tree and cluster-tree models
